@@ -7,6 +7,8 @@
 *.ncb
 *proj.user
 *.sdf
+*.suo
+*.opensdf
 
 ipch
 dependencies

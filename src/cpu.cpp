@@ -1,5 +1,4 @@
 #include "cpu.h"
-#include "tinerasnes.h"
 #include "mem.h"
 
 //    **********
@@ -18,6 +17,7 @@ int CPU::execOpCode()
         Program counter stores the previous instruction.
         Not sure what's up with this yet.    */
     _program_counter_previous = _program_counter;
+
     _byte_op_code = _mem->getMEM(_program_counter_previous);
     _byte_one = _mem->getMEM(_program_counter_previous + 1);
     _byte_two = _mem->getMEM(_program_counter_previous + 2);
@@ -3524,16 +3524,16 @@ int CPU::execOpCode()
 
         case 0x81:  // STA - Indirect (X)
             {
-                // (FIX) -- WHATS UP WITH THE INT AND BYTE REFERENCES HERE
-                int bLow, bHigh;
-                unsigned char tLow = (unsigned char)(_byte_one + _X);
+                // TODO: FIX -- WHATS UP WITH THE INT AND BYTE REFERENCES HERE
+                int byte_low, byte_high;
+                unsigned char byte_temp = (unsigned char)(_byte_one + _X);
 
                 // Get rLow and rHigh to find new address which 
-                bLow = _mem->getMEM(tLow);    // Value from first Zero-Page Address
-                bHigh = _mem->getMEM((unsigned char)(tLow + 1));    // Value from second Zero-Page Address
+                byte_low = _mem->getMEM(byte_temp);    // Value from first Zero-Page Address
+                byte_high = _mem->getMEM((unsigned char)(byte_temp + 1));    // Value from second Zero-Page Address
 
                 // Store Accumulator in Memory
-                _mem->setMEM(bLow + (bHigh << 8), _A);
+                _mem->setMEM(byte_low + (byte_high << 8), _A);
 
                 // Update CPU Cycles
                 _cpu_cycles = 6;
@@ -3545,17 +3545,17 @@ int CPU::execOpCode()
 
         case 0x91:  // STA - Indirect (Y)
             {
-                unsigned char bLow, bHigh;
+                unsigned char byte_low, byte_high;
 
                 // Get rLow and rHigh to find new address which 
-                bLow = _mem->getMEM((int)(_byte_one));    // Value from first Zero-Page Address
-                bHigh = _mem->getMEM((int)((unsigned char)(_byte_one + 1)));    // Value from second Zero-Page Address
+                byte_low = _mem->getMEM((int)(_byte_one));    // Value from first Zero-Page Address
+                byte_high = _mem->getMEM((int)((unsigned char)(_byte_one + 1)));    // Value from second Zero-Page Address
 
                 // Add Low Byte with X Offset after Getting Second Address (unlike addrIndX)
-                //bLow += Y; (FIX) << -- THIS IS WHAT BROKE MARIO!!!!
+                //byte_low += Y; (FIX) << -- THIS IS WHAT BROKE MARIO!!!!
 
                 // Store Accumulator in Memory
-                _mem->setMEM((bLow + (bHigh << 8)) + _Y, _A);
+                _mem->setMEM((byte_low + (byte_high << 8)) + _Y, _A);
 
                 // Update CPU Cycles
                 _cpu_cycles = 6;
@@ -3796,16 +3796,13 @@ int CPU::execOpCode()
         // THIS SHOULD NOT HAPPEN
         default:
             {
-                //// (FIX) This is a test &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& REMOVE ME !!!!!
                 _program_counter += 1;
             }
             break;
     }
 
-    // Probably going to let TinerasNES::run handle the (*15) stuff
-    // intTotalCpuCycles += intOpCodeCpuCycles * 15;
-
-    return _cpu_cycles;    //  Return value after executing OpCode
+    // Return the number of cpu cycles it took to execute the op code
+    return _cpu_cycles;
 }
 #pragma endregion
 
@@ -3831,7 +3828,7 @@ int CPU::NMI()
 
     // Push memory to stack
     _mem->stackPush(_stack_pointer, (unsigned char)(_program_counter >> 8)); // Push High Byte
-    _mem->stackPush(_stack_pointer, (char)(_program_counter & 0xFF));    // Push Low Byte
+    _mem->stackPush(_stack_pointer, (char)(_program_counter & 0xFF));        // Push Low Byte
 
     // Set Break Flag (REMEMBER TO DO THIS **AFTER** pushing SR to the stack so interrupt is cleared upon return
     // ?????? ?????? ?????? ?????? ????? ????????????????????? Reference (pg 25) says to set it before pushing SR ?????
@@ -3906,9 +3903,8 @@ int CPU::IRQ()
 bool CPU::checkCarry(int result)
 {
     if (result >= 256)
-    {
         return true;
-    }
+
     return false;
 }
 
@@ -3916,17 +3912,13 @@ bool CPU::checkCarry(int result)
 bool CPU::checkZero(int result)
 {
     if (result == 0)
-    {
         return true;
-    }
-    else 
-    {
+    else
         return false;
-    }
 }
 
 // Check for Overflow (ADC)
-bool CPU::checkOverflowADC(char regA, unsigned int result, char charOne)
+bool CPU::checkOverflowADC(char reg_A, unsigned int result, char byte_one)
 {
     /*The overflow flag is only set under two circumstances:
         1. There is a Carry from D6 to D7, but no Carry out of D7 (CF=0)
@@ -3936,16 +3928,14 @@ bool CPU::checkOverflowADC(char regA, unsigned int result, char charOne)
         D6 to D7 or from D7 out, BUT NOT BOTH.
      */
 
-    if ((((regA ^ charOne) & 0x80) == 0) && (((regA ^ result) & 0x80) != 0))
-    {
-        /* MessageBox.Show("True"); */
+    if ((((reg_A ^ byte_one) & 0x80) == 0) && (((reg_A ^ result) & 0x80) != 0))
         return true;
-    }
-    else { /* MessageBox.Show("False");*/ return false; }
+    else
+        return false;
 }
 
 // Check for Overflow (SBC)
-bool CPU::checkOverflowSBC(char regA, unsigned int result, char charOne)
+bool CPU::checkOverflowSBC(char reg_A, unsigned int result, char byte_one)
 {
     /*The overflow flag is only set under two circumstances:
         1. There is a Carry from D6 to D7, but no Carry out of D7 (CF=0)
@@ -3955,176 +3945,168 @@ bool CPU::checkOverflowSBC(char regA, unsigned int result, char charOne)
         D6 to D7 or from D7 out, BUT NOT BOTH.
      */
 
-    if ((((regA ^ charOne) & 0x80) != 0) && (((regA ^ result) & 0x80) != 0))
-    {
-        /* MessageBox.Show("True"); */
+    if ((((reg_A ^ byte_one) & 0x80) != 0) && (((reg_A ^ result) & 0x80) != 0))
         return true;
-    }
-    else { /* MessageBox.Show("False");*/ return false; }
+    else
+        return false;
 }
 
 // Check Sign
 bool CPU::checkNegative(int result)
 {
     if ((result & 0x80) == 0x80)
-    {
         return true;
-    }
-    else { return false; }
+    else
+        return false;
 }
 
 // Check Sign
 bool CPU::checkNegative(unsigned int result)
 {
     if ((result & 0x80) == 0x80)
-    {
         return true;
-    }
-    else { return false; }
+    else
+        return false;
 }
 #pragma endregion
 
 //    **********
 //    Page Change Check
 #pragma region /* ----- Check for Page Crossing to update intCpuCyclesOffset ----- */
-void CPU::pageChangeCheck(int newAddr)
+void CPU::pageChangeCheck(int new_address)
 {
     /* Checks to see if the memory page changes
        so that the number of CPU Cycles can be modified with the 
        correct value */
 
     // Compare previous address with the new one to see if page has changed
-    if ((_previous_addrress & 0xFF00) == (newAddr & 0xFF00))
-    {
+    if ((_previous_address & 0xFF00) == (new_address & 0xFF00))
         _page_changed_offset = 0;
-    }
     else
-    {
         _page_changed_offset = 1;
-    }
 
     // Store new address in intLastAddress for comparison next time
-    _previous_addrress = newAddr;
+    _previous_address = new_address;
 }
 #pragma endregion
 
 //    **********
 //    Addressing Modes
 #pragma region /* ----- Addressing Modes ----- */
-unsigned char CPU::addrAbs(unsigned char bLow, unsigned char bHigh)  // Absolute Addressing Mode
+unsigned char CPU::addrAbs(unsigned char byte_low, unsigned char byte_high)  // Absolute Addressing Mode
 {
     unsigned char result;
 
-    pageChangeCheck(addHighLowRegXY(bLow, bHigh, NULL));
+    pageChangeCheck(addHighLowRegXY(byte_low, byte_high, NULL));
 
     // Add Low and High Bytes.  First need to shift High Byte by two Hex Places (16 * 16 = 256)
-    result = _mem->getMEM(addHighLowRegXY(bLow, bHigh, NULL));
+    result = _mem->getMEM(addHighLowRegXY(byte_low, byte_high, NULL));
     
     return result;
 }
 
-unsigned char CPU::addrAbsZP(unsigned char bLow)  // Absolute[Zero-Page] Addressing Mode
+unsigned char CPU::addrAbsZP(unsigned char byte_low)  // Absolute[Zero-Page] Addressing Mode
 {
     unsigned char result;
 
-    pageChangeCheck(bLow);
+    pageChangeCheck(byte_low);
 
     // Absolute[ZP] only reqiures Low Byte, High Byte is 0x00
-    result = _mem->getMEM(bLow);
+    result = _mem->getMEM(byte_low);
     
     return result;
 }
 
-unsigned char CPU::addrIdx(unsigned char bLow, unsigned char bHigh, unsigned char regXY)  // Indexed Addressing Mode
+unsigned char CPU::addrIdx(unsigned char byte_low, unsigned char byte_high, unsigned char reg_XY)  // Indexed Addressing Mode
 {
     unsigned char result;
 
-    pageChangeCheck(addHighLowRegXY(bLow, bHigh, regXY));
+    pageChangeCheck(addHighLowRegXY(byte_low, byte_high, reg_XY));
 
     // Add Low and High Byte with X or Y Offset
-    result = _mem->getMEM(addHighLowRegXY(bLow, bHigh, regXY));
+    result = _mem->getMEM(addHighLowRegXY(byte_low, byte_high, reg_XY));
 
     return result;
 }
 
-unsigned char CPU::addrIdxZP(unsigned char bLow, unsigned char regXY)  // Indexed[Zero-Page] Addressing Mode
+unsigned char CPU::addrIdxZP(unsigned char byte_low, unsigned char reg_XY)  // Indexed[Zero-Page] Addressing Mode
 {
     unsigned char result;
 
-    pageChangeCheck((int)((unsigned char)(bLow + regXY)));
+    pageChangeCheck((int)((unsigned char)(byte_low + reg_XY)));
 
     // Add Low Byte with X or Y Offset, High Byte is 0x00
-    result = _mem->getMEM((int)((unsigned char)(bLow + regXY)));
+    result = _mem->getMEM((int)((unsigned char)(byte_low + reg_XY)));
 
     return result;
 }
 
-int CPU::addrInd(unsigned char bLow, unsigned char bHigh)  // Indirect Addressing Mode (ONLY USED BY JMP OPCODE)
+int CPU::addrInd(unsigned char byte_low, unsigned char byte_high)  // Indirect Addressing Mode (ONLY USED BY JMP OPCODE)
 {
     /* In this mode, we are give an address that points to another address that is used with the JMP command.
        We get the low char from the address given, then increment that address and get the high char from the 
        next memory location.*/
 
-    unsigned char rLow, rHigh;   // Low Byte Result, High Byte Result
+    unsigned char byte_low_result, byte_high_result;   // Low Byte Result, High Byte Result
     int result;         // Address attained after adding Low and High Result Bytes
-        
-    // Add Low Byte with X or Y Offset, High Byte is 0x00
-    rLow = _mem->getMEM(addHighLowRegXY(bLow, bHigh, NULL));
 
-    bLow += 1;      // Add 1 to get the value from the next address
-    if (bLow == 0x00)   // If rLow value changed from 0xFF to 0x00 when adding 1, we add 1 to rHigh
+    // Add Low Byte with X or Y Offset, High Byte is 0x00
+    byte_low_result = _mem->getMEM(addHighLowRegXY(byte_low, byte_high, NULL));
+
+    byte_low += 1;      // Add 1 to get the value from the next address
+    if (byte_low == 0x00)   // If rLow value changed from 0xFF to 0x00 when adding 1, we add 1 to rHigh
     {
-        bHigh += 1;
+        byte_high += 1;
     }
     
     // Get High Byte from Next Memory Address
-    rHigh = _mem->getMEM(addHighLowRegXY(bLow, bHigh, NULL));
+    byte_high_result = _mem->getMEM(addHighLowRegXY(byte_low, byte_high, NULL));
 
-    pageChangeCheck(addHighLowRegXY(rLow, rHigh, NULL));
+    pageChangeCheck(addHighLowRegXY(byte_low_result, byte_high_result, NULL));
 
     // Add the Low Result and High Result to get the new address to return
-    result = addHighLowRegXY(rLow, rHigh, NULL);
+    result = addHighLowRegXY(byte_low_result, byte_high_result, NULL);
 
     return result;
 }
 
-unsigned char CPU::addrIndX(unsigned char bLow, unsigned char regX)  // Pre-Indexed Indirect Addressing Mode (Only X Register & Only ZERO-PAGE)
+unsigned char CPU::addrIndX(unsigned char byte_low, unsigned char reg_X)  // Pre-Indexed Indirect Addressing Mode (Only X Register & Only ZERO-PAGE)
 {
     /* In this mode we add the contents of the X Register to the initial address given (hence 'Pre-Indexed') */
 
-    unsigned char rLow, rHigh;   // Low Byte Result, High Byte Result
+    unsigned char byte_low_result, byte_high_result;   // Low Byte Result, High Byte Result
     unsigned char result;        // Address attained after adding Low and High Result Bytes
 
     // Add Low Byte with X Offset, High Byte is 0x00
     // Get rLow and rHigh to find new address which holds value we are looking for
-    rLow = _mem->getMEM((unsigned char)(bLow + regX));    // Value from first Zero-Page Address
-    rHigh = _mem->getMEM((int)((unsigned char)(bLow + regX + 1)));    // Value from second Zero-Page Address
+    byte_low_result = _mem->getMEM((unsigned char)(byte_low + reg_X));    // Value from first Zero-Page Address
+    byte_high_result = _mem->getMEM((int)((unsigned char)(byte_low + reg_X + 1)));    // Value from second Zero-Page Address
 
-    pageChangeCheck(addHighLowRegXY(rLow, rHigh, NULL));
+    pageChangeCheck(addHighLowRegXY(byte_low_result, byte_high_result, NULL));
 
     // Add the Low Result and High Result to get the new address of the desired value
-    result = _mem->getMEM(addHighLowRegXY(rLow, rHigh, NULL));
+    result = _mem->getMEM(addHighLowRegXY(byte_low_result, byte_high_result, NULL));
 
     return result;
 }
 
-unsigned char CPU::addrIndY(unsigned char bLow, unsigned char regY)  // Post-Indexed Indirect Addressing Mode (Only Y Register & Only ZERO-PAGE)
+unsigned char CPU::addrIndY(unsigned char byte_low, unsigned char reg_Y)  // Post-Indexed Indirect Addressing Mode (Only Y Register & Only ZERO-PAGE)
 {
     /* In this mode we add the contents of the X Register to the Indirect Address, not the given one ('Post-Indexed ) */
 
-    unsigned char rLow, rHigh;   // Low Byte Result, High Byte Result
+    unsigned char byte_low_result, byte_high_result;   // Low Byte Result, High Byte Result
     unsigned char result;         // Address attained after adding Low and High Result Bytes
 
     int temp;
 
     // Get rLow and rHigh to find new address which holds value we are looking for
-    rLow = _mem->getMEM(bLow);    // Value from first Zero-Page Address
-    rHigh = _mem->getMEM((int)((unsigned char)(bLow + 1)));    // Value from second Zero-Page Address
+    byte_low_result = _mem->getMEM(byte_low);    // Value from first Zero-Page Address
+    byte_high_result = _mem->getMEM((int)((unsigned char)(byte_low + 1)));    // Value from second Zero-Page Address
 
     // Add Low Byte with X Offset after Getting Second Address (unlike addrIndX)
     // Must AND with 0xFFFF because the addresses rollover at 0xFFFF and you need
     // to get rid of the junk in the higher bits if the result is larger than 0xFFFF
-    temp = addHighLowRegXY(rLow, rHigh, regY);
+    temp = addHighLowRegXY(byte_low_result, byte_high_result, reg_Y);
 
     pageChangeCheck(temp);
 
@@ -4138,19 +4120,19 @@ unsigned char CPU::addrIndY(unsigned char bLow, unsigned char regY)  // Post-Ind
 //    **********
 //    Set Compare Flags
 #pragma region /* ----- Set Flags for CoMPare OpCodes (CMP, CPX, CPY) ----- */
-void CPU::setCompareFlags(int regAXY, unsigned char byteOne)
+void CPU::setCompareFlags(int reg_AXY, unsigned char byte_one)
 {
-    if (regAXY > byteOne)
+    if (reg_AXY > byte_one)
     {
         flags.bits.c = true;
         flags.bits.z = false;
     }
-    else if (regAXY == byteOne)
+    else if (reg_AXY == byte_one)
     {
         flags.bits.c = true;
         flags.bits.z = true;
     }
-    else if (regAXY < byteOne)
+    else if (reg_AXY < byte_one)
     {
         flags.bits.c = false;
         flags.bits.z = false;
@@ -4161,10 +4143,10 @@ void CPU::setCompareFlags(int regAXY, unsigned char byteOne)
 //    **********
 //    Add High Byte, Low Byte and RegXY
 #pragma region /* ----- Add High Byte, Low Byte and RegXY ----- */
-int CPU::addHighLowRegXY(unsigned char l, unsigned char h, unsigned char r)
+int CPU::addHighLowRegXY(unsigned char byte_low, unsigned char byte_high, unsigned char reg_XY)
 {
     // Add High Byte to Low Byte, then add regXY, then & 0xFFFF
-    return ((l + (h << 8)) + r) & 0xFFFF;
+    return ((byte_low + (byte_high << 8)) + reg_XY) & 0xFFFF;
 }
 #pragma endregion
 
@@ -4212,8 +4194,6 @@ void CPU::reset(bool is_init)
     _A = 0;        // Accumulator
     _X = 0;        // Index Register X
     _Y = 0;        // Index Register Y
-    
-    //opCodeCounter = 0;
 
     // Define Flags
     flags.bits.c = false;

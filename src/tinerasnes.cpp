@@ -13,9 +13,6 @@ TinerasNES::TinerasNES(QWidget *parent)
 
     connect(_ui.actionOpen, SIGNAL(triggered()), this, SLOT(openFile()));
     connect(_ui.actionExit, SIGNAL(triggered()), this, SLOT(quit()));
-
-    //_timer.setInterval(250);
-    //connect(&_timer, SIGNAL(timeout()), SLOT(timerTimeout()));
 }
 
 TinerasNES::~TinerasNES()
@@ -29,11 +26,10 @@ void TinerasNES::timerTimeout()
 
 void TinerasNES::run()
 {
+    // Temporarily using Qt to draw
     _panel_widget->setDrawBuffer(_ppu->framePreBuffer);
     _panel_widget->setImage();
     _panel_widget->setShouldDraw(true);
-
-    //_timer.start();
 
     int blah = 0;
     while (_running)
@@ -75,7 +71,8 @@ void TinerasNES::run()
             //    drawScreen(ppu->framePreBuffer);
             //}
 
-            // TODO: HACK FIX THIS (SETTING BG Color)
+            // TODO: HACK...FIX THIS (SETTING BG Color)
+            // Should be respecting BG transparency instead
             for (int i = 0; i < (256 * 240 * 4); i+=4)
             {
                 if (_ppu->framePreBuffer[i + 3] == 0)
@@ -85,14 +82,12 @@ void TinerasNES::run()
                     _ppu->framePreBuffer[i + 2] = _ppu->BGColorR;
                     _ppu->framePreBuffer[i + 3] = 255;
                 }
-                else
-                {
-                
-                }
             }
 
             // Force redraw
             // TODO: Investigate repaint vs update
+            // NOTE: Temporarily use Qt Image for drawing while reworking emulator
+            // Ugly, I know... don't look too close.
             _panel_widget->repaint();
 
             // Reset CPU Cycle

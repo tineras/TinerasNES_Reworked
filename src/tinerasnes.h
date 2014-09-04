@@ -20,7 +20,7 @@ static const int k_max_cpu_cycle = 29780 * 15; // Max CPU cycles per frame (2978
 class PanelWidget : public QWidget
 {
 public:
-    PanelWidget(QObject* parent) : _should_draw(false), _draw_buffer(nullptr)/*: _draw_buffer(QByteArray((k_nes_res_x * k_nes_res_y * 4), 0x44))*/
+    PanelWidget(QObject* parent) : _should_draw(false), _draw_buffer(nullptr)
     {
     }
     ~PanelWidget()
@@ -116,8 +116,6 @@ private:
     MEM* _mem;
     PPU* _ppu;
     APU* _apu;
-
-    QTimer _timer;
 };
 
 #endif // TINERASNES_H

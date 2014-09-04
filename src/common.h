@@ -7,7 +7,7 @@
 #include <ctype.h>
 #include <math.h>
 
-#include <windows.h>
+//#include <windows.h>
 
 #include <QPainter>
 #include <QFile>

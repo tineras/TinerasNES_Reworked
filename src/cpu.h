@@ -5,7 +5,6 @@
 
 //using namespace std;
 
-class TinerasNES;
 class MEM;
 
 /* (P) 'P'rocessor Status Flags */
@@ -67,7 +66,6 @@ public:
     void setY(unsigned char y) { _Y = y; }
 
     int execOpCode();
-    void writeNestest();
 
     // NMI & IRG
     int NMI();
@@ -82,45 +80,47 @@ public:
 
 private:
     // Check Flags
-    bool checkCarry(int);    // Check to see if result had a Carry
-    bool checkZero(int);    // Check to see if result was Zero
-    bool checkOverflowADC(char, unsigned int, char);    // Check for Overflow (ADC)
-    bool checkOverflowSBC(char, unsigned int, char);    // Check for Overflow (SBC)
-    bool checkNegative(int);    // Check Sign
-    bool checkNegative(unsigned int);    // Check Sign
+    bool checkCarry(int result);    // Check to see if result had a Carry
+    bool checkZero(int result);    // Check to see if result was Zero
+    bool checkOverflowADC(char reg_A, unsigned int result, char byte_one);    // Check for Overflow (ADC)
+    bool checkOverflowSBC(char reg_A, unsigned int result, char byte_one);    // Check for Overflow (SBC)
+    bool checkNegative(int result);    // Check Sign
+    bool checkNegative(unsigned int result);    // Check Sign
 
     // Check Page Change
-    void pageChangeCheck(int);    // Check for Page Change
+    void pageChangeCheck(int new_address);    // Check for Page Change
 
     // Memory Addressing
-    unsigned char addrAbs(unsigned char, unsigned char);  // Absolute Addressing Mode
-    unsigned char addrAbsZP(unsigned char);  // Absolute[Zero-Page] Addressing Mode
-    unsigned char addrIdx(unsigned char, unsigned char, unsigned char);  // Indexed Addressing Mode
-    unsigned char addrIdxZP(unsigned char, unsigned char);  // Indexed[Zero-Page] Addressing Mode
-    int           addrInd(unsigned char, unsigned char);  // Indirect Addressing Mode (ONLY USED BY JMP OPCODE)
-    unsigned char addrIndX(unsigned char, unsigned char);  // Pre-Indexed Indirect Addressing Mode (Only X Register & Only ZERO-PAGE)
-    unsigned char addrIndY(unsigned char, unsigned char);  // Post-Indexed Indirect Addressing Mode (Only Y Register & Only ZERO-PAGE)
+    unsigned char addrAbs(unsigned char byte_low, unsigned char byte_high);  // Absolute Addressing Mode
+    unsigned char addrAbsZP(unsigned char byte_low);  // Absolute[Zero-Page] Addressing Mode
+    unsigned char addrIdx(unsigned char byte_low, unsigned char byte_high, unsigned char reg_XY);  // Indexed Addressing Mode
+    unsigned char addrIdxZP(unsigned char byte_low, unsigned char reg_XY);  // Indexed[Zero-Page] Addressing Mode
+    int           addrInd(unsigned char byte_low, unsigned char byte_high);  // Indirect Addressing Mode (ONLY USED BY JMP OPCODE)
+    unsigned char addrIndX(unsigned char byte_low, unsigned char reg_X);  // Pre-Indexed Indirect Addressing Mode (Only X Register & Only ZERO-PAGE)
+    unsigned char addrIndY(unsigned char byte_low, unsigned char reg_Y);  // Post-Indexed Indirect Addressing Mode (Only Y Register & Only ZERO-PAGE)
 
     // Set Compare Flags
-    void setCompareFlags(int, unsigned char);
+    void setCompareFlags(int reg_AXY, unsigned char byte_one);
 
     // Add High Byte, Low Byte and regXY and return int result
-    int addHighLowRegXY(unsigned char, unsigned char, unsigned char);
+    int addHighLowRegXY(unsigned char byte_low, unsigned char byte_high, unsigned char reg_XY);
+
+    // For debugging using nestest rom
+    void writeNestest();
 
     /* 6 Special and General Purpose Registers */
-    int _program_counter;                // Program Counter
-    int _program_counter_previous;            // Previous Program Counter Value
-    unsigned char _stack_pointer;    // Stack Pointer
-    //unsigned char P;    // Status Register ('P'rocessor Status)
-    unsigned char _A;    // Accumulator
-    unsigned char _X;    // Index Register X
-    unsigned char _Y;    // Index Register Y
+    int _program_counter;           // Program Counter
+    int _program_counter_previous;  // Previous Program Counter Value
+    unsigned char _stack_pointer;   // Stack Pointer
+    //unsigned char P;              // Status Register ('P'rocessor Status)
+    unsigned char _A;               // Accumulator
+    unsigned char _X;               // Index Register X
+    unsigned char _Y;               // Index Register Y
 
-    int _previous_addrress;    // Hold previous address for Page Change checking
+    int _previous_address;    // Hold previous address for Page Change checking
 
     // File stream for nestest file
     //ofstream nestestDebugStream;
-    //int opCodeCounter;    // (FIX) remove me (8990 lines)
 
     // CPU Cycle Variables
     int _cpu_cycles;

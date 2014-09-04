@@ -1,9 +1,4 @@
-/*    NES_INPUT.cpp
-    Author: Aaron Wiginton
-
-    Description: Handles keyboard and mouse input.
-*/
-#include "windows.h"
+//#include "windows.h"
 #include "NES_INPUT.h"
 
 unsigned char NES_INPUT::readJoypad()
