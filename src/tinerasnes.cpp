@@ -1,8 +1,13 @@
 #include "tinerasnes.h"
 
+#include "cpu.h"
+#include "mem.h"
+#include "ppu.h"
+#include "apu.h"
+
 TinerasNES::TinerasNES(QWidget *parent)
     : QMainWindow(parent),
-    _running(true),
+    _running(false),
     _panel_widget(new PanelWidget(this)),
     _master_cpu_cycle(0),
     _current_cpu_cycle(0)

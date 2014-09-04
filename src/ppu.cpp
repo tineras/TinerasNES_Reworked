@@ -513,7 +513,7 @@ void PPU::updateDrawLocation()
     // Update 'v' at Beginning of frame
     if (pixelM == 0)
     {
-        v = _mem->t;
+        v = _mem->_t;
         
         //scrollYFine = (byte)((v & 0x7000) >> 12);
         
@@ -547,11 +547,11 @@ void PPU::updateDrawLocation()
         }
 
         // Look for changes in fineX to update it below
-        fXTemp = _mem->fineX;
-        fX = _mem->fineX;
+        fXTemp = _mem->_fineX;
+        fX = _mem->_fineX;
 
         // BEGINNING OF SCANLINE
-        int temp = _mem->t & 0x041F; //041f
+        int temp = _mem->_t & 0x041F; //041f
         //int temp = t & 0x041F; //041f
         v &= ~0x041F;
         v |= temp;
@@ -568,9 +568,9 @@ void PPU::updateDrawLocation()
     }
 
     // FineX update
-    if (fXTemp != _mem->fineX)
+    if (fXTemp != _mem->_fineX)
     {
-        fX = _mem->fineX;
+        fX = _mem->_fineX;
     }
 
     // Update nametable before checking masking

@@ -6,10 +6,10 @@
 
 #include "common.h"
 
-#include "cpu.h"
-#include "mem.h"
-#include "ppu.h"
-#include "apu.h"
+class CPU;
+class MEM;
+class PPU;
+class APU;
 
 // NES Emu Resolution
 static const int k_nes_res_x = 256;

@@ -48,7 +48,114 @@
 #include "mem.h"
 #include "TinerasNES.h"
 //#include "NES_INPUT.h"
+#include "ppu.h"
 #include "apu.h"
+
+//    **********
+//    MEM Constructor
+MEM::MEM(TinerasNES* tn)
+{
+    /* Set local tn pointer to point to TinerasNES object TN
+    so that its members/objects outside of CPU class can be
+    accessed from within CPU class.    */
+    _tn = tn;
+
+    reset();
+}
+
+//    **********
+//    MEM Destructor
+MEM::~MEM()
+{
+}
+
+void MEM::init(PPU* ppu, APU* apu)
+{
+    _ppu = ppu;
+    _apu = apu;
+}
+
+void MEM::setCHRPRGBanks(char num_CHR_banks, char num_PRG_banks)
+{
+    _num_CHR_banks = num_CHR_banks;
+    _num_PRG_banks = num_PRG_banks;
+}
+
+void MEM::setHorizontalVerticalMirrorBit(char value)
+{
+    _horiz_vert_mirror = (int)value;
+}
+
+void MEM::setMapperNumber(char num)
+{
+    _mapper_num = num;
+}
+
+//    **********
+//    Create CHR and PRG Memory
+void MEM::initCHRPRG(int size_CHR, int size_PRG)
+{
+    _memCHR.resize(size_CHR);
+    _memPRG.resize(size_PRG);
+
+    // Initialize PRG Mapper Pointers
+    for(int i = 0; i < 8; i++)
+    {
+        for(int j = 0; j < 16; j++)
+        {
+            _mapperPRGPtr[i][j] = &_memPRG[i * 0x1000 + j * 0x0100];
+        }
+    }
+
+    if(size_CHR != 0)
+    {
+        // Initialize CHR Mapper Pointers
+        for(int i = 0; i < 2; i++)
+        {
+            for(int j = 0; j < 16; j++)
+            {
+                _mapperCHRPtr[i][j] = &_memCHR[i * 0x1000 + j * 0x0100];
+            }
+        }
+    }
+    else if(size_CHR == 0)
+    {
+        _memCHR.resize(0x2000);
+
+        // Initialize CHR Mapper Pointers
+        for(int i = 0; i < 2; i++)
+        {
+            for(int j = 0; j < 16; j++)
+            {
+                _mapperCHRPtr[i][j] = &_memCHR[i * 0x1000 + j * 0x0100];
+            }
+        }
+    }
+}
+
+// Read CHR data from ROM into cart memory
+void MEM::readCHR(char* mem_CHR, int length)
+{
+    _memCHR.assign(mem_CHR, mem_CHR + length);
+}
+
+// Read PRG data from ROM into cart memory
+void MEM::readPRG(char* mem_PRG, int length)
+{
+    _memPRG.assign(mem_PRG, mem_PRG + length);
+}
+
+// TODO: Fix this mess
+void MEM::initPRGMapperPtrs(int offset)
+{
+    for(int i = 0; i < 4; i++)
+    {
+        for(int j = 0; j < 16; j++)
+        {
+            _mapperPRGPtr[i + 4][j] = &_memPRG[i * 0x1000 + j * 0x0100 + offset];
+        }
+    }
+}
 
 //    **********
 //    Push Stack
@@ -74,13 +181,13 @@ unsigned char MEM::stackPop(unsigned char &SP)
 
 //    **********
 //    Get Memory (PRG)
-unsigned char MEM::getMEM(int addr)
+unsigned char MEM::getMEM(int address)
 {
     // Prevents invalid reads by wrapping around after addition
-    addr &= 0xFFFF;
+    address &= 0xFFFF;
 
     // Catch out of range addressing <<-- This should not happen because of the line above
-    if (addr > 0xFFFF)
+    if (address > 0xFFFF)
     {
         //MessageBox.Show("[OpCodes.cs, getMemoryByte()] BAD ADDRESS: " + String.Format("{0:x2}", addr));
         //cpu.badOpCode = true;
@@ -88,34 +195,34 @@ unsigned char MEM::getMEM(int addr)
     }
 
     // Address Masking at 0800-1FFF
-    if ((addr < 0x2000))
+    if ((address < 0x2000))
     {
-        return _memCPU[addr & 0x07FF];
+        return _memCPU[address & 0x07FF];
     }
 
     // Handle PPU related OpCodes (in Memory class)
-    else if ((addr >= 0x2000) && (addr <= 0x2007))
+    else if ((address >= 0x2000) && (address <= 0x2007))
     {
-        return getPPUByte(addr);
+        return getPPUByte(address);
     }
 
     // Address Masking for PPU at 2008-3FFF
-    else if ((addr >= 0x2008) && (addr <= 0x3FFF))
+    else if ((address >= 0x2008) && (address <= 0x3FFF))
     {
-        return getPPUByte(addr & 0x2007);
+        return getPPUByte(address & 0x2007);
     }
 
     #pragma region APU - Control Register (READ)
-    else if (addr == 0x4015)
+    else if (address == 0x4015)
     {
         unsigned char data;
 
-        if(_apu->dmcIRQEnabled)    data |= 0x80;      // Return DMC IRG Flag Status
+        if(_apu->dmcIRQEnabled)      data |= 0x80;    // Return DMC IRG Flag Status
         if(_apu->frameIRQEnabled)    data |= 0x40;    // Return Frame Interrupt Flag Status
 
-        //if(_apu->dmcLength)    data |= 0x10;        // Return DMC Enabled Status
+        //if(_apu->dmcLength)          data |= 0x10;    // Return DMC Enabled Status
         if(_apu->noise()->length)    data |= 0x08;    // Return Noise Status
-        if(_apu->triangle()->length)    data |= 0x04; // Return Triangle Status
+        if(_apu->triangle()->length) data |= 0x04;    // Return Triangle Status
         if(_apu->rect2()->length)    data |= 0x02;    // Return Rectangle/Pulse 2 Status
         if(_apu->rect1()->length)    data |= 0x01;    // Return Rectangle/Pulse 1 Status
 
@@ -124,7 +231,7 @@ unsigned char MEM::getMEM(int addr)
     #pragma endregion
 
     // Joystick Read
-    else if (addr == 0x4016)
+    else if (address == 0x4016)
     {
         // Read Joypad 1
         //return tn->nes_input->readJoypad();
@@ -132,15 +239,15 @@ unsigned char MEM::getMEM(int addr)
     }
 
     // Address Masking for PPU at 2008-3FFF
-    else if ((addr >= 0x8000) && (addr <= 0xFFFF))
+    else if ((address >= 0x8000) && (address <= 0xFFFF))
     {
-        return getMemoryMappedCPUByte(addr);
+        return getMemoryMappedCPUByte(address);
     }
 
     // Handles all memory spaces not related to PPU and controllers
     else
     {
-        return _memCPU[addr];
+        return _memCPU[address];
     }
 
     // Should never happen
@@ -149,34 +256,34 @@ unsigned char MEM::getMEM(int addr)
 
 //    **********
 //    Set Memory (PRG)
-void MEM::setMEM(int addr, unsigned char data)
+void MEM::setMEM(int address, unsigned char data)
 {
     // Prevents invalid reads by wrapping around after addition
-    addr &= 0xFFFF;
+    address &= 0xFFFF;
 
     // Copy to 0x0000-0x07FF and Mirror at 0x0800-0x1FFF
-    if (addr < 0x2000)
+    if (address < 0x2000)
     {
         // To intended memory address
-        _memCPU[addr & 0x07FF] = data;
+        _memCPU[address & 0x07FF] = data;
     }
 
     // Handle PPU related OpCodes (in Memory class)
-    else if ((addr >= 0x2000) && (addr <= 0x2007))
+    else if ((address >= 0x2000) && (address <= 0x2007))
     {
         // Set byte to memory
-        setPPUByte(addr, data);
+        setPPUByte(address, data);
     }
 
     // Address Masking for PPU at 2008-3FFF
-    else if ((addr >= 0x2008) && (addr <= 0x3FFF))
+    else if ((address >= 0x2008) && (address <= 0x3FFF))
     {
-        setPPUByte(addr & 0x2007, data);
+        setPPUByte(address & 0x2007, data);
     }
 
     #pragma region 256 Byte DMA Write to Sprite Memory
     // Handles 256 Byte DMA Write to Sprite Memory
-    else if (addr == 0x4014)
+    else if (address == 0x4014)
     {
         for (int i = 0; i < 256; ++i, ++_memCPU[0x2003])
         {
@@ -191,7 +298,7 @@ void MEM::setMEM(int addr, unsigned char data)
 
     #pragma region Write to Joypads
     // Joypads
-    else if (addr == 0x4016)
+    else if (address == 0x4016)
     {
         // Write to Joypad 1
         //tn->nes_input->writeJoypad(data);
@@ -199,25 +306,25 @@ void MEM::setMEM(int addr, unsigned char data)
     #pragma endregion
 
     #pragma region Mappers
-    else if (addr >= 0x8000 && addr <= 0xFFFF)
+    else if (address >= 0x8000 && address <= 0xFFFF)
     {
         // Do Mapper Stuff
-        setMemoryMappedCPUByte(addr, data);
+        setMemoryMappedCPUByte(address, data);
     }
     #pragma endregion
     // Handles all memory spaces not related to PPU, and controllers
     else
     {
-        if (addr < 0x4000 || addr > 0x4020)
+        if (address < 0x4000 || address > 0x4020)
         {
             // MessageBox.Show("[OpCodes.cs, setMemoryByte()] BAD ADDRESS: " + String.Format("{0:x2}", addr));
             // memory.memCPU[addr] = data;
         }
 
         #pragma region APU - Rectangle/Pulse 1 Registers Write
-        if (addr >= 0x4000 && addr <= 0x4003)
+        if (address >= 0x4000 && address <= 0x4003)
         {
-            if(addr == 0x4000)
+            if(address == 0x4000)
             {
                 /* $4000/4 ddle vvvv   (dd) duty cycle type
                                             00=12.5%      01000000
@@ -244,7 +351,7 @@ void MEM::setMEM(int addr, unsigned char data)
                 else
                     _apu->rect1()->volume = _apu->rect1()->envelope;
             }
-            if(addr == 0x4001)
+            if(address == 0x4001)
             {
                 /* $4001/5 eppp nsss    (e) enable sweep
                                         (ppp) period/sweep update rate (divider's period is set to P + 1)
@@ -267,7 +374,7 @@ void MEM::setMEM(int addr, unsigned char data)
                 _apu->rect1()->sweepReset = true;
                 _apu->rect1()->checkSweepSilence();
             }
-            if(addr == 0x4002)
+            if(address == 0x4002)
             {
                 /* $4002/6 pppp pppp    (pppp pppp) period low (8 LSB of wavelength)    */
 
@@ -280,7 +387,7 @@ void MEM::setMEM(int addr, unsigned char data)
 
                 _apu->rect1()->checkSweepSilence();
             }
-            if(addr == 0x4003)
+            if(address == 0x4003)
             {
                 /* $4003/7 llll lppp    (llll l) length index
                                         (ppp) period high    */    
@@ -301,9 +408,9 @@ void MEM::setMEM(int addr, unsigned char data)
         #pragma endregion
 
         #pragma region APU - Rectangle/Pulse 2 Registers Write
-        if (addr >= 0x4004 && addr <= 0x4007)
+        if (address >= 0x4004 && address <= 0x4007)
         {
-            if(addr == 0x4004)
+            if(address == 0x4004)
             {
                 /* $4000/4 ddle vvvv   (dd) duty cycle type
                                             00=12.5%      01000000
@@ -325,7 +432,7 @@ void MEM::setMEM(int addr, unsigned char data)
                 else
                     _apu->rect2()->volume = _apu->rect2()->envelope;
             }
-            if(addr == 0x4005)
+            if(address == 0x4005)
             {
                 /* $4001/5 eppp nsss    (e) enable sweep
                                         (ppp) period/sweep update rate (divider's period is set to P + 1)
@@ -343,7 +450,7 @@ void MEM::setMEM(int addr, unsigned char data)
                 _apu->rect2()->sweepReset = true;
                 _apu->rect2()->checkSweepSilence();
             }
-            if(addr == 0x4006)
+            if(address == 0x4006)
             {
                 /* $4002/6 pppp pppp    (pppp pppp) period low (8 LSB of wavelength)    */
 
@@ -351,10 +458,10 @@ void MEM::setMEM(int addr, unsigned char data)
 
                 _apu->rect2()->checkSweepSilence();
             }
-            if(addr == 0x4007)
+            if(address == 0x4007)
             {
                 /* $4003/7 llll lppp    (llll l) length index
-                                        (ppp) period high    */    
+                                        (ppp) period high    */
 
                 _apu->rect2()->length = _apu->rect2()->lengthTable[(data & 0xF8) >> 3];
                 _apu->rect2()->period = (_apu->rect2()->period & 0xFF) | ((data & 0x07) << 8);
@@ -366,9 +473,9 @@ void MEM::setMEM(int addr, unsigned char data)
         #pragma endregion
 
         #pragma region APU - Triangle Registers Write
-        if (addr >= 0x4008 && addr <= 0x400B)
+        if (address >= 0x4008 && address <= 0x400B)
         {
-            if(addr == 0x4008)
+            if(address == 0x4008)
             {
                 /* $4008   clll llll    (c) linear counter start (halt)/length counter clock disable
                                         (lll llll) linear counter load    */
@@ -381,11 +488,11 @@ void MEM::setMEM(int addr, unsigned char data)
                 //else
                 //    _apu->rect2()->volume = _apu->rect2()->envelope;
             }
-            if(addr == 0x4009)
+            if(address == 0x4009)
             {
                 /* $4009 Unused */
             }
-            if(addr == 0x400A)
+            if(address == 0x400A)
             {
                 /* $400A   pppp pppp   (pppp pppp) period low (8 LSB of wavelength)    */
 
@@ -393,7 +500,7 @@ void MEM::setMEM(int addr, unsigned char data)
 
                 _apu->triangle()->updateFrequency();
             }
-            if(addr == 0x400B)
+            if(address == 0x400B)
             {
                 /*     $400B   llll lppp   (llll l) length index
                                         (ppp) period high    */    
@@ -412,9 +519,9 @@ void MEM::setMEM(int addr, unsigned char data)
         #pragma endregion
 
         #pragma region APU - Noise Registers Write
-        if (addr >= 0x400C && addr <= 0x400F)
+        if (address >= 0x400C && address <= 0x400F)
         {
-            if(addr == 0x400C)
+            if(address == 0x400C)
             {
                 /*    $400C   --le vvvv   (l) loop env/disable length
                                         (e) env disable
@@ -429,11 +536,11 @@ void MEM::setMEM(int addr, unsigned char data)
                 else
                     _apu->noise()->volume = _apu->noise()->envelope;
             }
-            if(addr == 0x400D)
+            if(address == 0x400D)
             {
                 /* $400D Unused */
             }
-            if(addr == 0x400E)
+            if(address == 0x400E)
             {
                 /*    $400E   s--- pppp   (s) short/tone mode
                                         (pppp) period index/playback sample rate    */
@@ -448,7 +555,7 @@ void MEM::setMEM(int addr, unsigned char data)
 
                 _apu->noise()->updateFrequency();
             }
-            if(addr == 0x400F)
+            if(address == 0x400F)
             {
                 /*     $400F   llll l---   (llll l) length index    */    
 
@@ -460,7 +567,7 @@ void MEM::setMEM(int addr, unsigned char data)
         #pragma endregion
 
         #pragma region APU - Control Registers
-        if (addr == 0x4015)
+        if (address == 0x4015)
         {
             /*(write)                    
             $4015   ---d nt21   (d) DMC (If clear, the DMC's bytes remaining is set to 0,
@@ -487,7 +594,7 @@ void MEM::setMEM(int addr, unsigned char data)
                 _apu->rect1()->length = 0;
         }
 
-        if (addr == 0x4017)
+        if (address == 0x4017)
         {
                 /* $4017   mi-- ----    (f) 0 - 4-frame cycle mode
                                             1 - 5-frame cycle mode
@@ -503,17 +610,17 @@ void MEM::setMEM(int addr, unsigned char data)
         }
         #pragma endregion
 
-        _memCPU[addr] = data;
+        _memCPU[address] = data;
     }
 }
 
 //    **********
 //    Get PPU Memory
-unsigned char MEM::getPPUByte(int addr)
+unsigned char MEM::getPPUByte(int address)
 {
     #pragma region Read 0x2000
     // PPU Control Register 1
-    if (addr == 0x2000)
+    if (address == 0x2000)
     {
         return _memCPU[0x2000];
     }
@@ -521,7 +628,7 @@ unsigned char MEM::getPPUByte(int addr)
 
     #pragma region Read 0x2001
     // PPU Control Register 2
-    else if (addr == 0x2001)
+    else if (address == 0x2001)
     {
         return _memCPU[0x2001];
     }
@@ -529,7 +636,7 @@ unsigned char MEM::getPPUByte(int addr)
 
     #pragma region Read 0x2002
     // PPU Status Register
-    else if (addr == 0x2002)
+    else if (address == 0x2002)
     {
         // Clear the VBLANK Flag here.  This is documented (p. 5 on 2c02 doc)
 
@@ -547,7 +654,7 @@ unsigned char MEM::getPPUByte(int addr)
 
         //t = 0;
         // Reading 2002 will clear the latch, NOT WRITING 2002
-        PPULatchToggle = false;
+        _PPULatchToggle = false;
 
         return tempByte;
     }
@@ -555,7 +662,7 @@ unsigned char MEM::getPPUByte(int addr)
 
     #pragma region Read 0x2003
     // PPU Status Register
-    else if (addr == 0x2003)
+    else if (address == 0x2003)
     {
         // Program should not need to read this
         return _memCPU[0x2003];
@@ -564,7 +671,7 @@ unsigned char MEM::getPPUByte(int addr)
 
     #pragma region Read 0x2004
     // Sprite Memory Data
-    else if (addr == 0x2004)
+    else if (address == 0x2004)
     {
         // Pg 5 of 117 in "NES Specifications says that 0x2003 is NOT incremented after a read, only writes
         //memCPU[0x2003] += 1;
@@ -575,38 +682,38 @@ unsigned char MEM::getPPUByte(int addr)
 
     #pragma region Read 0x2007
     // PPU Memory Data
-    else if (addr == 0x2007)
+    else if (address == 0x2007)
     {
         // Temporary variable so that VRAMAddr can be incremented without affecting the current read
-        int VRAMAddrTemp = VRAMAddr;
+        int VRAMAddrTemp = _VRAMAddr;
 
         // Determine Horizontal/Vertical write and increment according to $2000.2
         if ((_memCPU[0x2000] & 0x04) == 0x00)
         {
-            VRAMAddr++;
+            _VRAMAddr++;
         }
         else if ((_memCPU[0x2000] & 0x04) == 0x04)
         {
-            VRAMAddr += 32;
+            _VRAMAddr += 32;
         }
 
         // ***** Address Mirrors *****
         // If data is requested from 0000-2FFF
         if (VRAMAddrTemp <= 0x2FFF)
         {
-            char temp = prevByteRead;
+            char temp = _prevByteRead;
             
             // If data is requested from 0000-1FFF
             if (VRAMAddrTemp <= 0x1FFF)
             {
-                prevByteRead = getMemoryMappedPPUByte(VRAMAddrTemp);
+                _prevByteRead = getMemoryMappedPPUByte(VRAMAddrTemp);
                 return temp;
             }
             else
             {
             // ------------------------------------NEED TO FIX THIS FOR MASKING-----------------------------------------------
                 #pragma region ***** (NAME TABLES) Mirrors  *****
-                prevByteRead = _memPPU[getMaskedAddrData(VRAMAddrTemp)];
+                _prevByteRead = _memPPU[getMaskedAddrData(VRAMAddrTemp)];
                 #pragma endregion
                 return temp;
             }
@@ -615,8 +722,8 @@ unsigned char MEM::getPPUByte(int addr)
         // If data is requested from 3000-3EFF
         else if (VRAMAddrTemp <= 0x3EFF)
         {
-            char temp = prevByteRead;
-            prevByteRead = _memPPU[VRAMAddrTemp - 0x1000];
+            char temp = _prevByteRead;
+            _prevByteRead = _memPPU[VRAMAddrTemp - 0x1000];
             return temp;
         }
 
@@ -659,23 +766,23 @@ unsigned char MEM::getPPUByte(int addr)
 }
 //    **********
 //    Set PPU Memory
-void MEM::setPPUByte(int addr, unsigned char data)
+void MEM::setPPUByte(int address, unsigned char data)
 {
     #pragma region Write 0x2000
     // PPU Control Register 1
-    if (addr == 0x2000)
+    if (address == 0x2000)
     {
         // Copy to intended memory address
-        _memCPU[addr] = data;
+        _memCPU[address] = data;
 
-        t &= 0x73FF;
-        t |= ((int)(data & 0x03) << 10);
+        _t &= 0x73FF;
+        _t |= ((int)(data & 0x03) << 10);
     }
     #pragma endregion
 
     #pragma region Write 0x2001
     // PPU Control Register 2
-    else if (addr == 0x2001)
+    else if (address == 0x2001)
     {
         #pragma region Set BG and Sprite Visibility
         //// Check to see if BG is turned on/off
@@ -703,22 +810,22 @@ void MEM::setPPUByte(int addr, unsigned char data)
         { _ppu->bolClipSP = true; }
         #pragma endregion
 
-        _memCPU[addr] = data;
+        _memCPU[address] = data;
     }
     #pragma endregion
 
     #pragma region Write 0x2003
     // Sprite Memory Address
-    else if (addr == 0x2003)
+    else if (address == 0x2003)
     {
         // Write the address to 0x2003 so 0x2004 can access it
-        _memCPU[addr] = data;
+        _memCPU[address] = data;
     }
     #pragma endregion
 
     #pragma region Write 0x2004
     // Sprite Memory Data
-    else if (addr == 0x2004)
+    else if (address == 0x2004)
     {
         // Write the byte to 0x2004 first.  Don't know if this is necessary. May just be able to bypass this step and write directly to memSPRRAM
         _memSPRRAM[_memCPU[0x2003]] = data;
@@ -730,19 +837,19 @@ void MEM::setPPUByte(int addr, unsigned char data)
 
     #pragma region Write 0x2005
     // Screen Scroll Offset
-    else if (addr == 0x2005)// && ((memCPU[0x2002] & 0x80) != 0x80))
+    else if (address == 0x2005)// && ((memCPU[0x2002] & 0x80) != 0x80))
     {
-        if (!PPULatchToggle)
+        if (!_PPULatchToggle)
         {
             // Copy byte into temporary location
             //VRAMAddrFirstWrite = data;
 
             // Offset X
-            t &= 0x7FE0;
-            t |= ((data & 0xF8) >> 3);
+            _t &= 0x7FE0;
+            _t |= ((data & 0xF8) >> 3);
 
             // fineX is ONLY updated on the first write to 0x2005
-            fineX = (unsigned char)(data & 0x07);
+            _fineX = (unsigned char)(data & 0x07);
         }
         else
         {
@@ -750,21 +857,21 @@ void MEM::setPPUByte(int addr, unsigned char data)
             //VRAMAddr = data + (VRAMAddrFirstWrite & 0xFF) * 16 * 16;
 
             // Offset Y
-            t &= 0x0C1F;
-            t |= ((data & 0xF8) << 2) | ((data & 0x07) << 12);
+            _t &= 0x0C1F;
+            _t |= ((data & 0xF8) << 2) | ((data & 0x07) << 12);
             //t &= 0x0FFF;
             //t |= ((data & 0x07) << 12);
         }
 
-        PPULatchToggle = !PPULatchToggle;
+        _PPULatchToggle = !_PPULatchToggle;
     }
     #pragma endregion
 
     #pragma region Write 0x2006
     // PPU Memory Address
-    else if (addr == 0x2006)   // Written to TWICE to read/write to/from PPU Memory
+    else if (address == 0x2006)   // Written to TWICE to read/write to/from PPU Memory
     {
-        if (!PPULatchToggle)
+        if (!_PPULatchToggle)
         {
             //// Increment 0x2006 Counter To Test for High Byte on Second Pass
             //PPULatchToggle = !PPULatchToggle;
@@ -777,15 +884,15 @@ void MEM::setPPUByte(int addr, unsigned char data)
             //{
                 #pragma region Scrolling Data
                 // Get first 2006 write bits
-                t &= 0x00FF;
-                t |= ((data & 0x3F) << 8);
+                _t &= 0x00FF;
+                _t |= ((data & 0x3F) << 8);
 
                 // Clear top two bits
                 //t &= 0x3FFF;
                 #pragma endregion
             //}
         }
-        else if (PPULatchToggle)
+        else if (_PPULatchToggle)
         {
             //// Reset Counter
             //PPULatchToggle = !PPULatchToggle;
@@ -797,51 +904,51 @@ void MEM::setPPUByte(int addr, unsigned char data)
             //{
                 #pragma region Scrolling Data
                 // Get second 2006 write bits
-                t &= 0x7F00;
-                t |= data;
+                _t &= 0x7F00;
+                _t |= data;
 
-                VRAMAddr = t;
+                _VRAMAddr = _t;
                 #pragma endregion
             //}
         }
 
-        PPULatchToggle = !PPULatchToggle;
+        _PPULatchToggle = !_PPULatchToggle;
     }
     #pragma endregion
 
     #pragma region Write 0x2007
     // PPU Memory Data
-    else if (addr == 0x2007)   // Uses Memory Address in 2006 to read/write
+    else if (address == 0x2007)   // Uses Memory Address in 2006 to read/write
     {
         // Write to Pattern Table (CHR on ROM)
-        if (VRAMAddr < 0x2000)
+        if (_VRAMAddr < 0x2000)
         {
             // This should never happen
-            _memCHR[VRAMAddr] = data;
+            _memCHR[_VRAMAddr] = data;
         }
 
         // Address Masking for 2000-2FFF
-        if ((VRAMAddr >= 0x2000) && (VRAMAddr < 0x3000))
+        if ((_VRAMAddr >= 0x2000) && (_VRAMAddr < 0x3000))
         {
             // ------------------------------------NEED TO FIX THIS FOR MASKING-----------------------------------------------
             #pragma region ***** (NAME TABLES) Mirrors  *****
-            _memPPU[getMaskedAddrData(VRAMAddr)] = data;
+            _memPPU[getMaskedAddrData(_VRAMAddr)] = data;
             #pragma endregion
         }
 
         // Address Masking for 3000-3EFF
-        else if ((VRAMAddr >= 0x3000) && (VRAMAddr <= 0x3EFF))
+        else if ((_VRAMAddr >= 0x3000) && (_VRAMAddr <= 0x3EFF))
         {
-            _memPPU[VRAMAddr - 0x1000] = data;
+            _memPPU[_VRAMAddr - 0x1000] = data;
         }
 
         // Address Masking for 3F00-3FFF - Palette Mirrors (Masking)
-        else if ((VRAMAddr >= 0x3F00) && (VRAMAddr <= 0x3FFF))
+        else if ((_VRAMAddr >= 0x3F00) && (_VRAMAddr <= 0x3FFF))
         {
             // "Mirroring" (Address Masking)
-            if (VRAMAddr > 0x3F1F)
+            if (_VRAMAddr > 0x3F1F)
             {
-                _memPPU[VRAMAddr & 0x3F1F] = data;
+                _memPPU[_VRAMAddr & 0x3F1F] = data;
             }
 
             // -- Transparency address masking --
@@ -850,37 +957,37 @@ void MEM::setPPUByte(int addr, unsigned char data)
             // Bytes (like 3F10) are copied down (or up) to their respective BG/Sprite byte
             // So, a write to 3F10 would also write to 3F00 and a write to3F04 would also
             // write to 3F14...and so on.
-            if (VRAMAddr < 0x3F10 && (VRAMAddr % 4) == 0)
+            if (_VRAMAddr < 0x3F10 && (_VRAMAddr % 4) == 0)
             {
-                _memPPU[VRAMAddr + 0x10] = data;  // Transparency Byte
+                _memPPU[_VRAMAddr + 0x10] = data;  // Transparency Byte
             }
-            else if (VRAMAddr >= 0x3F10 && (VRAMAddr % 4) == 0)
+            else if (_VRAMAddr >= 0x3F10 && (_VRAMAddr % 4) == 0)
             {
-                _memPPU[VRAMAddr - 0x10] = data;  // Transparency Byte
+                _memPPU[_VRAMAddr - 0x10] = data;  // Transparency Byte
             }
-            _memPPU[VRAMAddr] = data;
+            _memPPU[_VRAMAddr] = data;
         }
 
         // Address Masking for 4000-FFFF
-        else if (VRAMAddr >= 0x4000 && VRAMAddr <= 0xFFFF)
+        else if (_VRAMAddr >= 0x4000 && _VRAMAddr <= 0xFFFF)
         {
-            _memPPU[VRAMAddr &= 0x3FFF] = data;
+            _memPPU[_VRAMAddr &= 0x3FFF] = data;
         }
         else
         {
             // Get address location from the temporary int that holds the data from two previous 0x2006 writes
-            _memPPU[VRAMAddr] = data;
+            _memPPU[_VRAMAddr] = data;
             //MessageBox.Show("[Memory.cs: SetMemoryByte] Write to 2007");
         }
 
         // Determine Horizontal/Vertical write and increment according to $2000.2
         if ((_memCPU[0x2000] & 0x04) == 0x00)
         {
-            VRAMAddr++;
+            _VRAMAddr++;
         }
         else if ((_memCPU[0x2000] & 0x04) == 0x04)
         {
-            VRAMAddr += 32;
+            _VRAMAddr += 32;
         }
     }
     #pragma endregion
@@ -895,14 +1002,14 @@ void MEM::setPPUByte(int addr, unsigned char data)
 
 //    **********
 //    Get Memory Mapped CPU Byte
-unsigned char MEM::getMemoryMappedCPUByte(int addr)
+unsigned char MEM::getMemoryMappedCPUByte(int address)
 {
-    int addrTemp = addr - 0x8000;
+    int addrTemp = address - 0x8000;
     unsigned char loc_one = ((addrTemp & 0xF000) >> 12) & 0xFF;
     unsigned char loc_two = ((addrTemp & 0x0F00) >> 8) & 0xFF;
     unsigned char offset = (addrTemp & 0x00FF) & 0xFF;
 
-    unsigned char *returnTempPrt = mapperPRGPtr[loc_one][loc_two] + offset;
+    unsigned char *returnTempPrt = _mapperPRGPtr[loc_one][loc_two] + offset;
     unsigned char returnTemp = *returnTempPrt;
 
     return returnTemp;
@@ -910,7 +1017,7 @@ unsigned char MEM::getMemoryMappedCPUByte(int addr)
 
 //    **********
 //    Set Memory Mapped CPU Byte
-void MEM::setMemoryMappedCPUByte(int addr, unsigned char data)
+void MEM::setMemoryMappedCPUByte(int address, unsigned char data)
 {
     switch (_mapper_num)
     {
@@ -918,7 +1025,7 @@ void MEM::setMemoryMappedCPUByte(int addr, unsigned char data)
             {
                 // Do nothing, just write to address
                 // **THIS SHOULD NEVER HAPPEN**
-                _memPRG[addr - 0x8000] = data;
+                _memPRG[address - 0x8000] = data;
                 //setMemoryMappedCPUByte(addr, data);
             }
             break;
@@ -932,7 +1039,7 @@ void MEM::setMemoryMappedCPUByte(int addr, unsigned char data)
                 {
                     for(int j = 0; j < 16; j++)
                     {
-                        mapperPRGPtr[i][j] = &_memPRG[i * 0x1000 + j * 0x0100 + offset];
+                        _mapperPRGPtr[i][j] = &_memPRG[i * 0x1000 + j * 0x0100 + offset];
                     }
                 }
             }
@@ -948,7 +1055,7 @@ void MEM::setMemoryMappedCPUByte(int addr, unsigned char data)
                 {
                     for(int j = 0; j < 16; j++)
                     {
-                        mapperCHRPtr[i][j] = &_memCHR[i * 0x1000 + j * 0x0100 + offset];
+                        _mapperCHRPtr[i][j] = &_memCHR[i * 0x1000 + j * 0x0100 + offset];
                     }
                 }
             }
@@ -965,61 +1072,63 @@ void MEM::setMemoryMappedCPUByte(int addr, unsigned char data)
 
 //    **********
 //    Get Memory Mapped PPU Byte
-unsigned char MEM::getMemoryMappedPPUByte(int addr)
+unsigned char MEM::getMemoryMappedPPUByte(int address)
 {
-    unsigned char loc_one = ((addr & 0x1000) >> 12) & 0xFF;
-    unsigned char loc_two = ((addr & 0x0F00) >> 8) & 0xFF;
-    unsigned char offset = (addr & 0x00FF) & 0xFF;
+    unsigned char loc_one = ((address & 0x1000) >> 12) & 0xFF;
+    unsigned char loc_two = ((address & 0x0F00) >> 8) & 0xFF;
+    unsigned char offset = (address & 0x00FF) & 0xFF;
 
-    unsigned char *returnTempPrt = mapperCHRPtr[loc_one][loc_two] + offset;
-    unsigned char returnTemp = *returnTempPrt;
+    unsigned char *return_temp_ptr = _mapperCHRPtr[loc_one][loc_two] + offset;
+    unsigned char return_temp = *return_temp_ptr;
 
-    return returnTemp;
+    return return_temp;
 }
 
 //    **********
 //    Set Memory Mapped PPU Byte
-void MEM::setMemoryMappedPPUByte(int addr, unsigned char data)
+void MEM::setMemoryMappedPPUByte(int address, unsigned char data)
 {
 
 }
 
 //    **********
 //    Get PPU Memory for External Classes
-unsigned char MEM::getPPU(int addr)
+unsigned char MEM::getPPU(int address)
 {
-    if(addr < 0x2000)
+    if(address < 0x2000)
     {
-        return getMemoryMappedPPUByte(addr);
+        return getMemoryMappedPPUByte(address);
     }
     else
     {
-        return _memPPU[addr];
+        return _memPPU[address];
     }
 }
 
 //    **********
 //    Get Address Masked Mirror Data
-int MEM::getMaskedAddrData(int ntaddr)
+int MEM::getMaskedAddrData(int nametable_address)
 {
-    if(ntaddr < 0x2000)
-    { return getMemoryMappedPPUByte(ntaddr);    }
+    if(nametable_address < 0x2000)
+    {
+        return getMemoryMappedPPUByte(nametable_address);
+    }
     // Horizontal Name Table Mirroring
     //if (byteMirror == 0x00 && (ntaddr >= 0x2000) && (ntaddr < 0x2400))
     //{
     //    return ntaddrTemp;
     //}
-    if (_horiz_vert_mirror == 0x00 && (ntaddr >= 0x2400) && (ntaddr < 0x2800))
+    if (_horiz_vert_mirror == 0x00 && (nametable_address >= 0x2400) && (nametable_address < 0x2800))
     {
-        return ntaddr & 0x23FF;
+        return nametable_address & 0x23FF;
     }
     //else if (byteMirror == 0x00 && (ntaddr >= 0x2800) && (ntaddr < 0x2C00))
     //{
     //    return ntaddrTemp;
     //}
-    else if (_horiz_vert_mirror == 0x00 && (ntaddr >= 0x2C00) && (ntaddr < 0x3000))
+    else if (_horiz_vert_mirror == 0x00 && (nametable_address >= 0x2C00) && (nametable_address < 0x3000))
     {
-        return ntaddr & 0x2BFF;
+        return nametable_address & 0x2BFF;
     }
 
     // Vertical Name Table Mirroring
@@ -1031,25 +1140,23 @@ int MEM::getMaskedAddrData(int ntaddr)
     //{
     //    return ntaddrTemp;
     //}
-    else if (_horiz_vert_mirror == 0x01 && (ntaddr >= 0x2800) && (ntaddr < 0x2C00))
+    else if (_horiz_vert_mirror == 0x01 && (nametable_address >= 0x2800) && (nametable_address < 0x2C00))
     {
-        return ntaddr - 0x0800;
+        return nametable_address - 0x0800;
     }
-    else if (_horiz_vert_mirror == 0x01 && (ntaddr >= 0x2C00) && (ntaddr < 0x3000))
+    else if (_horiz_vert_mirror == 0x01 && (nametable_address >= 0x2C00) && (nametable_address < 0x3000))
     {
-        return ntaddr - 0x0800;
+        return nametable_address - 0x0800;
     }
 
-    return ntaddr;
+    return nametable_address;
 }
 
 //    **********
 //  VBlank Set/Clear
-void MEM::setVBlank(bool VBlankStatus)
+void MEM::setVBlank(bool vblank_status)
 {
-    VBlank = VBlankStatus;
-
-    if (VBlankStatus)
+    if (vblank_status)
     {
         _memCPU[0x2002] |= 0x80;
     }
@@ -1061,9 +1168,9 @@ void MEM::setVBlank(bool VBlankStatus)
 
 //    **********
 //  Sprite Hit Set/Clear
-void MEM::setSpriteHit(bool SpriteHitStatus)
+void MEM::setSpriteHit(bool sprite_hit_status)
 {
-    if (SpriteHitStatus)
+    if (sprite_hit_status)
     {
         _memCPU[0x2002] |= 0x40;
     }
@@ -1083,81 +1190,10 @@ void MEM::reset()
     memset(_memPPU, 0, sizeof(_memPPU));
 
     // Set PPU Latch to false
-    PPULatchToggle = false;
-    t = 0;
-    fineX = 0;
+    _PPULatchToggle = false;
+    _t = 0;
+    _fineX = 0;
 
-    VRAMAddr = 0;
-    prevByteRead = 0;
-}
-
-//    **********
-//    Create CHR and PRG Memory
-void MEM::initCHRPRG(int size_CHR, int size_PRG)
-{
-    //memPRG = new unsigned char[sizePRG];
-    //memCHR = new unsigned char[sizeCHR];
-
-    _memPRG.resize(size_PRG);
-
-    // Initialize PRG Mapper Pointers
-    for(int i = 0; i < 8; i++)
-    {
-        for(int j = 0; j < 16; j++)
-        {
-            mapperPRGPtr[i][j] = &_memPRG[i * 0x1000 + j * 0x0100];
-        }
-    }
-
-    if(size_CHR != 0)
-    {
-        _memCHR.resize(size_CHR);
-
-        // Initialize CHR Mapper Pointers
-        for(int i = 0; i < 2; i++)
-        {
-            for(int j = 0; j < 16; j++)
-            {
-                mapperCHRPtr[i][j] = &_memCHR[i * 0x1000 + j * 0x0100];
-            }
-        }
-    }
-    else if(size_CHR == 0)
-    {
-        _memCHR.resize(0x2000);
-
-        // Initialize CHR Mapper Pointers
-        for(int i = 0; i < 2; i++)
-        {
-            for(int j = 0; j < 16; j++)
-            {
-                mapperCHRPtr[i][j] = &_memCHR[i * 0x1000 + j * 0x0100];
-            }
-        }
-    }
-}
-
-void MEM::init(PPU* ppu, APU* apu)
-{
-    _ppu = ppu;
-    _apu = apu;
-}
-
-//    **********
-//    MEM Constructor
-MEM::MEM(TinerasNES* tn)
-{
-    /* Set local tn pointer to point to TinerasNES object TN
-    so that its members/objects outside of CPU class can be
-    accessed from within CPU class.    */
-    _tn = tn;
-
-    reset();
-}
-
-//    **********
-//    MEM Destructor
-MEM::~MEM()
-{
-
+    _VRAMAddr = 0;
+    _prevByteRead = 0;
 }
