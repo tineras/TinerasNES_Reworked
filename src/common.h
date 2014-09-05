@@ -12,4 +12,4 @@
 #include <QPainter>
 #include <QFile>
 #include <QFileDialog>
-#include <QTimer>
+#include <QElapsedTimer>

@@ -166,7 +166,7 @@ void PPU::run(int runto)
 
         // Reset PPU Timestamp
         tsPPU = 0;
-        readyToRender = true;
+        _ready_to_render = true;
 
         // Reset Scanline to -2
         scanline = -2;
@@ -798,7 +798,7 @@ void PPU::reset()
 //    **********
 //    PPU Constuctor
 #pragma region /* ----- PPU Constructor ----- */
-PPU::PPU(TinerasNES* tn) : readyToRender(false)
+PPU::PPU(TinerasNES* tn) : _ready_to_render(false)
 {
     _tn = tn;
 }

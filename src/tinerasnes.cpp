@@ -36,6 +36,9 @@ void TinerasNES::run()
     _panel_widget->setImage();
     _panel_widget->setShouldDraw(true);
 
+    _frame_timer.start();
+
+    // TODO: REMOVE ME
     int blah = 0;
     while (_running)
     {
@@ -51,59 +54,40 @@ void TinerasNES::run()
         _ppu->run(_current_cpu_cycle);
 
         // Ready to render
-        if(_ppu->readyToRender)
+        while(_ppu->readyToRender())
         {
-            //lastCPUCycle = 0; // Appears to be unused
-
-            // For framerate limiting
-            //renderNextFrame = false;
-
-            // Get total frames since last reset of the 1000ms counter
-            //frames++;
-
-            // For frameskipping
-            //if(framecount++ >= 60)
-            //    framecount = 0;
-
-            // Skip every 10th frame
-            //if(framecount % 61 == 0)
-            //{
-            //    // Skip frame
-            //}
-            //else
-            //{
-            //    // Draw next frame to buffer
-            //    drawScreen(ppu->framePreBuffer);
-            //}
-
-            // TODO: HACK...FIX THIS (SETTING BG Color)
-            // Should be respecting BG transparency instead
-            for (int i = 0; i < (256 * 240 * 4); i+=4)
+            if (_frame_timer.elapsed() >= k_frame_time)
             {
-                if (_ppu->framePreBuffer[i + 3] == 0)
+                // TODO: HACK...FIX THIS (SETTING BG Color)
+                // Should be respecting BG transparency instead
+                for (int i = 0; i < (256 * 240 * 4); i+=4)
                 {
-                    _ppu->framePreBuffer[i]     = _ppu->BGColorB;
-                    _ppu->framePreBuffer[i + 1] = _ppu->BGColorG;
-                    _ppu->framePreBuffer[i + 2] = _ppu->BGColorR;
-                    _ppu->framePreBuffer[i + 3] = 255;
+                    if (_ppu->framePreBuffer[i + 3] == 0)
+                    {
+                        _ppu->framePreBuffer[i]     = _ppu->BGColorB;
+                        _ppu->framePreBuffer[i + 1] = _ppu->BGColorG;
+                        _ppu->framePreBuffer[i + 2] = _ppu->BGColorR;
+                        _ppu->framePreBuffer[i + 3] = 255;
+                    }
                 }
-            }
 
-            // Force redraw
-            // TODO: Investigate repaint vs update
-            // NOTE: Temporarily use Qt Image for drawing while reworking emulator
-            // Ugly, I know... don't look too close.
-            _panel_widget->repaint();
+                // Force redraw
+                // TODO: Investigate repaint vs update
+                // NOTE: Temporarily use Qt Image for drawing while reworking emulator
+                // Ugly, I know... don't look too close.
+                _panel_widget->repaint();
 
-            // Reset CPU Cycle
-            _current_cpu_cycle = 0;
-            _ppu->readyToRender = false;
+                // Reset CPU Cycle
+                _current_cpu_cycle = 0;
+                _ppu->setReadyToRender(false);
+                _frame_timer.restart();
 
-            // TODO: Don't trigger processEvents too often
-            if (blah++ >= 10)
-            {
-                QApplication::processEvents();
-                blah = 0;
+                // TODO: Don't trigger processEvents too often
+                if (blah++ >= 4)
+                {
+                    QApplication::processEvents();
+                    blah = 0;
+                }
             }
         }
     }
@@ -128,7 +112,7 @@ void TinerasNES::openFile()
 {
     initialize();
 
-    QString filename = QFileDialog::getOpenFileName(this, "Select NES Rom", "E:/Emulators/TestRoms", "NES file (*.nes);;Zipped NES file (*.zip)");
+    QString filename = QFileDialog::getOpenFileName(this, "Select NES Rom", "c:/emu/TestRoms", "NES file (*.nes);;Zipped NES file (*.zip)");
 
     if (filename.isEmpty())
         return;

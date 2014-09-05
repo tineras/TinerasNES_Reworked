@@ -24,6 +24,9 @@ public:
     void drawBG(int tile, int line, int pixel, unsigned char color, unsigned char rgbOffset);    // Render Background to frame pre-buffer
     void drawSP(int x, int y, unsigned char color, unsigned char rgbOffset);    // Render Sprites to frame pre-buffer
 
+    bool readyToRender() { return _ready_to_render; }
+    void setReadyToRender(bool ready_to_render) { _ready_to_render = ready_to_render; }
+
     // Run PPU
     void run(int);
 
@@ -49,7 +52,6 @@ public:
     // Main draw buffer
     unsigned char framePreBuffer[256 * 240 * 4];    // Final rendered frame to draw. Contains BG and Sprites.
 
-    bool readyToRender; // Ready to draw to screen?
     bool bolDrawBG;
     bool bolDrawSP;
     bool bolClipBG;
@@ -74,6 +76,7 @@ private:
 
     // Run to 'VBlankTime' 
     int VBlankTime; // 20 Scanlines, 340 Pixels Per Scanline, 5 PPU Timestamp Cycles
+    bool _ready_to_render; // Ready to draw to screen?
 
     int tsPPU;    // PPU Timestamp
     int scanline;    // Scanline number
