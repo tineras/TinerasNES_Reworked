@@ -43,15 +43,17 @@ public:
     // Handles nametable masking
     int getMaskedAddrData(int nametable_address);
 
+    inline unsigned char memSPRRAM(int address) { return _memSPRRAM[address]; }
+    inline unsigned char memCPU(int address) { return _memCPU[address]; }
+    inline unsigned char memPPU(int address) { return _memPPU[address]; }
+
+    inline void setMemCPU(int address, unsigned char data) { _memCPU[address] = data; }
+
     // Reset MEM Variables
     void reset();
 
     int _t;
     unsigned char _fineX;
-
-    // TODO: Make private and pass pointers to ppu for access
-    unsigned char _memSPRRAM[256];  // SPR-RAM - Contains Sprite Attributes (64 sprites) x (4 bytes each) = 256 bytes (0x100)
-    unsigned char _memCPU[65536];   // 64K of CPU Memory (0x10000)
 
     // Mappers
     unsigned char* _mapperPRGPtr[0x08][0x10]; // [0-8] * 0x1000, [0-F] * 0x0100
@@ -81,7 +83,10 @@ private:
     char _horiz_vert_mirror;    // Horizontal Mirror Bit (Horizontal(0)/Vertical(1))
     char _mapper_num;
 
-    unsigned char _memPPU[16384];    // 16K of PPU Memory  (0x4000)
+    // TODO: Make private and pass pointers to ppu for access
+    unsigned char _memSPRRAM[256];  // SPR-RAM - Contains Sprite Attributes (64 sprites) x (4 bytes each) = 256 bytes (0x100)
+    unsigned char _memCPU[65536];   // 64K of CPU Memory (0x10000)
+    unsigned char _memPPU[16384];   // 16K of PPU Memory  (0x4000)
 
     std::vector<unsigned char> _memPRG;    // Cart PRoGram Memory
     std::vector<unsigned char> _memCHR;    // Cart CHaRacter Memory

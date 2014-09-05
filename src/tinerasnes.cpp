@@ -249,8 +249,8 @@ void TinerasNES::openFile()
 
     // TODO: Fix this mess
     // Set Joypad Values
-    _mem->_memCPU[0x4016] = 0x40;
-    _mem->_memCPU[0x4017] = 0x40;
+    _mem->setMemCPU(0x4016, 0x40);
+    _mem->setMemCPU(0x4017, 0x40);
 
     // Turn on apu
     // _apu->APU_play();

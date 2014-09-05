@@ -55,7 +55,7 @@ void PPU::run(int runto)
             _mem->setVBlank(true);
         
         // Make sure the system has not just been reset and check to see if Interrupt is enabled on VBLANK
-        if((_mem->_memCPU[0x2000] & 0x80) == 0x80)// && !_tn->reset)
+        if((_mem->memCPU(0x2000) & 0x80) == 0x80)// && !_tn->reset)
         {
             //_tn->currentCPUCycle += _cpu->NMI(); // OLD
             _tn->bumpCurrentCPUCycle(_cpu->NMI());
@@ -87,7 +87,9 @@ void PPU::run(int runto)
         // For reason, clearing Sprite Hit causes the scroll offset to change seemingly randomly
         // So I have disabled the reset of that below
         //if (!_tn->reset)
-            _mem->_memCPU[0x2002] &= 0x40;
+        unsigned char status_register = _mem->memCPU(0x2002);
+        status_register &= 0x40;
+        _mem->setMemCPU(0x2002, status_register);
 
         // Clear VBlank
         _mem->setVBlank(false);
@@ -204,7 +206,7 @@ void PPU::renderBackground()
     }
 
     // Check to see if BG is turned on/off
-    if ((_mem->_memCPU[0x2001] & 0x08) == 0x08)
+    if ((_mem->memCPU(0x2001) & 0x08) == 0x08)
     { bolDrawBG = true; }
     else
     { bolDrawBG = false; }
@@ -261,7 +263,7 @@ void PPU::renderSprites()
     #pragma region Draw Sprites to Frame Buffer
 
     // Check to see if Sprites are turned on/off
-    if ((_mem->_memCPU[0x2001] & 0x10) == 0x10)
+    if ((_mem->memCPU(0x2001) & 0x10) == 0x10)
     { bolDrawSP = true; }
     else
     { bolDrawSP = false; }
@@ -285,19 +287,21 @@ void PPU::renderSprites()
             {
 
                 // Get sprite palette
-                int SPPal = 0x3F10 + (_mem->_memSPRRAM[spriteToDraw[spriteIndex] + 2] & 0x03) * 4;
+                int SPPal = 0x3F10 + (_mem->memSPRRAM(spriteToDraw[spriteIndex] + 2) & 0x03) * 4;
 
                 // ???
-                //int pixel = pixelX - _mem->memSPRRAM[spriteToDraw[spriteIndex] + 3];
+                //int pixel = pixelX - _mem->memSPRRAM(spriteToDraw[spriteIndex] + 3);
 
                 // Check for 0 Sprite Hit
                 if (bgAlpha && spriteToDraw[spriteIndex] == 0)
                 {
-                    _mem->_memCPU[0x2002] |= 0x40;
+                    unsigned char status_register = _mem->memCPU(0x2002);
+                    status_register |= 0x40;
+                    _mem->setMemCPU(0x2002, status_register);
                 }
 
                 // If (not transparent && not behing BG) || BG alpha is 0
-                if (SPColor != 0 && ((_mem->_memSPRRAM[spriteToDraw[spriteIndex] + 2] & 0x20) == 0x00) || !bgAlpha)
+                if (SPColor != 0 && ((_mem->memSPRRAM(spriteToDraw[spriteIndex] + 2) & 0x20) == 0x00) || !bgAlpha)
                 {
                     // Just here to make the drawing location easier to read
                     int y = scanline;
@@ -327,7 +331,9 @@ void PPU::checkScanlineForSprites()
     //spriteToDraw = spriteToDrawT;           // Number of sprites found
     for (int c = 0; c < sizeof(spriteToDraw); c++) { spriteToDraw[c] = spriteToDrawT[c]; }    // Number of sprites found
     spriteIndex = spriteIndexT;             // Any sprites found?
-    _mem->_memCPU[0x2002] &= memCPU2002T;  // Reset '8 sprites on a scanline' bit
+    unsigned char status_register = _mem->memCPU(0x2002);
+    status_register &= memCPU2002T;
+    _mem->setMemCPU(0x2002, status_register);  // Reset '8 sprites on a scanline' bit
 
     // Reset Temp Sprite Values for next evaluation
     memset(spriteToDrawT, 0, sizeof(spriteToDrawT));    // Stores the location of each sprite found
@@ -339,17 +345,17 @@ void PPU::checkScanlineForSprites()
     for (int i = 0; i < 0xFF; i += 4)
     {
         // Set default sprite height
-        int spriteHeight = ((_mem->_memCPU[0x2000] & 0x20) == 0x20) ? 16 : 8;
+        int spriteHeight = ((_mem->memCPU(0x2000) & 0x20) == 0x20) ? 16 : 8;
 
         // Check to see if the sprite is on the current scanline in the Y direction
-        if (scanline - (unsigned char)(_mem->_memSPRRAM[i]) < spriteHeight &&    // Is the sprite within 8 or 16 pixels of current scanline
-            scanline - (unsigned char)(_mem->_memSPRRAM[i]) >= 0 &&              // ...
+        if (scanline - (unsigned char)(_mem->memSPRRAM(i)) < spriteHeight &&    // Is the sprite within 8 or 16 pixels of current scanline
+            scanline - (unsigned char)(_mem->memSPRRAM(i)) >= 0 &&              // ...
             spriteIndexT < 8 &&         // Less than 8 sprites found?
-            _mem->_memSPRRAM[i] > 0 && // Is the sprite on screen between the 0 and EF scanline?
-            _mem->_memSPRRAM[i] < 0xEF) // ...
+            _mem->memSPRRAM(i) > 0 && // Is the sprite on screen between the 0 and EF scanline?
+            _mem->memSPRRAM(i) < 0xEF) // ...
         {
             // Check to see if the sprite is on the line in the X direction within the screen limits
-            if (_mem->_memSPRRAM[i + 3] >= 0 && _mem->_memSPRRAM[i + 3] <= 255)
+            if (_mem->memSPRRAM(i + 3) >= 0 && _mem->memSPRRAM(i + 3) <= 255)
             {
                 spriteToDrawT[spriteIndexT++] = (unsigned char)i;
 
@@ -387,7 +393,7 @@ bool PPU::getSpriteToDraw()
     for (int i = 0; i <= numSprites; i++ )
     {
         // Get X Position of Sprite
-        int sprPixel = _mem->_memSPRRAM[spriteToDraw[i] + 3];
+        int sprPixel = _mem->memSPRRAM(spriteToDraw[i] + 3);
 
         // Compare X Position of Sprite with Current Location of pixelX that is being drawn
         if (pixelX - sprPixel < 8 && pixelX - sprPixel >= 0)
@@ -413,17 +419,17 @@ bool PPU::getSpriteToDraw()
 bool PPU::checkTransparency(int i)
 {
     // NO NEED TO CHECK FOR spLineNumber, pal, Pattern Table, flipping on every pixel .... only every line except for flipping which is every tile (and mybe others too)
-    int spLineNumber = (unsigned char)(scanline - (unsigned char)(_mem->_memSPRRAM[spriteToDraw[i]] + 1));
+    int spLineNumber = (unsigned char)(scanline - (unsigned char)(_mem->memSPRRAM(spriteToDraw[i]) + 1));
 
     // Get the current line number that sprites are being drawn on
     int line = spLineNumber;
 
     // Check for sprite flipping
-    bool flipY = ((_mem->_memSPRRAM[spriteToDraw[i] + 2] & 0x80) == 0x80);
-    bool flipX = ((_mem->_memSPRRAM[spriteToDraw[i] + 2] & 0x40) == 0x40);
+    bool flipY = ((_mem->memSPRRAM(spriteToDraw[i] + 2) & 0x80) == 0x80);
+    bool flipX = ((_mem->memSPRRAM(spriteToDraw[i] + 2) & 0x40) == 0x40);
 
     // Set flipping
-    int pixel = pixelX - _mem->_memSPRRAM[spriteToDraw[i] + 3];
+    int pixel = pixelX - _mem->memSPRRAM(spriteToDraw[i] + 3);
     int temp = 7 - pixel;
     if (flipX)
     {
@@ -435,7 +441,7 @@ bool PPU::checkTransparency(int i)
     #pragma region Get OAM Pattern Table Bytes
     
     // If the sprites are 8x8
-    if ((_mem->_memCPU[0x2000] & 0x20) == 0x00) // for 8x8 sprites
+    if ((_mem->memCPU(0x2000) & 0x20) == 0x00) // for 8x8 sprites
     {
         if (flipY)
         {
@@ -443,22 +449,22 @@ bool PPU::checkTransparency(int i)
         }
 
         // Get location of the sprites (Pattern Table 0x0000 or 0x1000)
-        int spritePatternTableAddr = ((_mem->_memCPU[0x2000] & 0x08) >> 3) * 0x1000;
+        int spritePatternTableAddr = ((_mem->memCPU(0x2000) & 0x08) >> 3) * 0x1000;
 
-        unsigned char PTable2 = _mem->getPPU(spritePatternTableAddr + _mem->_memSPRRAM[spriteToDraw[i] + 1] * 16 + line);  // Get sprite data piece 1 to combine with data piece 2 to get color of pixel
-        unsigned char PTable2a = _mem->getPPU(spritePatternTableAddr + _mem->_memSPRRAM[spriteToDraw[i] + 1] * 16 + line + 8);  // Get sprite data piece 2 to combine with data piece 1 to get color of pixel
+        unsigned char PTable2 = _mem->getPPU(spritePatternTableAddr + _mem->memSPRRAM(spriteToDraw[i] + 1) * 16 + line);  // Get sprite data piece 1 to combine with data piece 2 to get color of pixel
+        unsigned char PTable2a = _mem->getPPU(spritePatternTableAddr + _mem->memSPRRAM(spriteToDraw[i] + 1) * 16 + line + 8);  // Get sprite data piece 2 to combine with data piece 1 to get color of pixel
 
         // Combine data and get color of pixel
         SPColor = (unsigned char)(((PTable2 >> temp) & 0x01) | (((PTable2a >> temp) & 0x01) * 2)); 
     }
     // Else If the sprites are 8x16
-    else if ((_mem->_memCPU[0x2000] & 0x20) == 0x20) // for 8x16 sprites
+    else if ((_mem->memCPU(0x2000) & 0x20) == 0x20) // for 8x16 sprites
     {
         // Check to see if there is a 0x1000 offset
-        int intOffset = (_mem->_memSPRRAM[spriteToDraw[i] + 1] & 0x01) * 0x1000;
+        int intOffset = (_mem->memSPRRAM(spriteToDraw[i] + 1) & 0x01) * 0x1000;
 
         // Get tile number of the specific sprite
-        int byteTemp = (unsigned char)(_mem->_memSPRRAM[spriteToDraw[i] + 1] & 0xFE);
+        int byteTemp = (unsigned char)(_mem->memSPRRAM(spriteToDraw[i] + 1) & 0xFE);
 
         // Looks at the top half of the sprite
         if (spLineNumber < 8)
@@ -694,7 +700,7 @@ unsigned char PPU::getColor(unsigned char ntOffset)
     //  9. Draw the R,G,B,A of each pixel by passing in the [Tile, Line, Pixel and Color] of each pixel
 
     // Saving cycles
-    int intPtrLoc = (((_mem->_memCPU[0x2000] & 0x10) >> 4) * 0x1000) + ntOffset * 16 + BGTileLine;
+    int intPtrLoc = (((_mem->memCPU(0x2000) & 0x10) >> 4) * 0x1000) + ntOffset * 16 + BGTileLine;
 
     unsigned char PTable1 = _mem->getPPU(intPtrLoc);  // Get background pattern table byte 1 of 2 for combining
     unsigned char PTable2 = _mem->getPPU(intPtrLoc + 0x08);  // Get background pattern table byte 2 of 2 for combining
