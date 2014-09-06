@@ -27,7 +27,7 @@ static const double k_frame_time = 1.0 / 60 * 1000; // Time for a single frame (
 class PanelWidget : public QWidget
 {
 public:
-    PanelWidget(QObject* parent) : _should_draw(false), _draw_buffer(nullptr)
+    PanelWidget(QObject* parent) : _painter(new QPainter(this)), _should_draw(false), _draw_buffer(nullptr)
     {
     }
     ~PanelWidget()
@@ -58,11 +58,10 @@ protected:
                 if (_draw_buffer == nullptr)
                     return;
 
-                QPainter _painter(this);
-
+                _painter->begin(this);
                 _img_scaled = _img.scaled(this->width(), this->height(), Qt::IgnoreAspectRatio);
-
-                _painter.drawImage(0, 0, _img_scaled);
+                _painter->drawImage(0, 0, _img);
+                _painter->end();
             }
         }
     }
@@ -78,6 +77,7 @@ protected:
     }
 
 private:
+    QPainter* _painter;
     //QByteArray _draw_buffer;
     //QImage _img_bg;
     //QImage _img_bg_scaled;

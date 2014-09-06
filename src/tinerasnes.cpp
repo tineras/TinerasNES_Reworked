@@ -137,7 +137,7 @@ void TinerasNES::run()
                 _frame_timer.restart();
 
                 // TODO: Don't trigger processEvents too often
-                if (blah++ >= 4)
+                if (blah++ >= 2)
                 {
                     QApplication::processEvents();
                     blah = 0;

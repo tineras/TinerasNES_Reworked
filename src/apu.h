@@ -1,9 +1,3 @@
-/*    APU.cpp
-    Author: Aaron Wiginton
-
-    Description: APU for TinerasNES.
-*/
-
 #ifndef _APU_HEADER
 #define _APU_HEADER
 
@@ -81,59 +75,60 @@ private:
     void init_audio();    // Init APU
 
     /**** DEBUG ****/
-    unsigned int sampleCounter_W;
-    unsigned int sampleCounter_R;
+    unsigned int _sample_counter_W;
+    unsigned int _sample_counter_R;
 
     bool _reg_updated;
     unsigned char _reg_update_values[4];
     /***************/
 
-    const static int frameUpdate[2][5];
+    const static int _frame_update[2][5];
 
-    bool ch1Enable;
-    bool ch2Enable;
-    bool ch3Enable;
-    bool ch4Enable;
-    bool ch5Enable;
+    bool _ch1_enable;
+    bool _ch2_enable;
+    bool _ch3_enable;
+    bool _ch4_enable;
+    bool _ch5_enable;
 
-    int prevWrite;
-    bool WriteBufferReady;
+    bool _write_buffer_ready;
 
-    unsigned int apuCyclesTotal;
+    unsigned int _apu_cycles_total;
 
-    unsigned char apuPlayBuffer[1024];
-    unsigned char apuWriteBuffer[65536];
-    unsigned int apuPlayBufferPos;
-    unsigned int apuWriteBufferPos;
-    unsigned int apuWriteBufferPos_Last;
-    unsigned short apuBufferPos;
-    unsigned int apuBufferLen;
-    bool apuPlayBufferEmpty;
-    bool apuWriteBuffer_FirstFullWriteComplete;
+    unsigned char _apu_play_buffer[1024];
+    unsigned char apu_write_buffer[65536];
+    unsigned int _apu_play_buffer_pos;
+    unsigned int _apu_write_buffer_pos;
+    unsigned int _apu_write_buffer_pos_last;
+    unsigned short _apu_buffer_pos;
+    unsigned int _apu_buffer_len;
+    bool _apu_play_buffer_empty;
+    bool _apu_write_buffer_first_full_write_complete;
 
-    unsigned int dmcFlag;        // DMC IRG Flag Length
-    unsigned int frameFlag;        // Frame Interrupt Flag Length
-
-    unsigned char _frame_NTSC_PAL;// 4 or 5 Frame Count
+    unsigned char _frame_NTSC_PAL;  // 4 or 5 Frame Count
     unsigned int _frame_counter;    // Frame Counter
     bool _frame_IRQ_enabled;
     bool _dmc_IRQ_enabled;
 
-    char outputSample;
+    char _output_sample;
 
-    bool _dmc_enabled;      // DMC Enable
-    bool _noise_enabled;    // Noise Enable
-    bool _triangle_enabled;      // Triangle Enable
+    bool _dmc_enabled;            // DMC Enable
+    bool _noise_enabled;          // Noise Enable
+    bool _triangle_enabled;       // Triangle Enable
     bool _rectangle_1_enabled;    // Rectangle/Pulse 1 Enable
     bool _rectangle_2_enabled;    // Rectangle/Pulse 2 Enable
 
-    bool frameIRQPending;
-    bool IRQNextTime;
+    // UNUSED ??
+    int _previous_write;
+    unsigned int _dmc_flag;           // DMC IRG Flag Length
+    unsigned int _frame_flag;         // Frame Interrupt Flag Length
+    bool _frame_IRQ_pending;
+    bool _IRQ_next_time;
+    // UNUSED ??
 
-    SDL_AudioSpec audioSpecDesired, audioSpecObtained;
+    SDL_AudioSpec _audio_spec_desired, _audio_spec_obtained;
 
     // File stream for nestest file
-    ofstream apuDebugFileStream;
+    ofstream _apu_debug_file_stream;
 
     APU_noise* _noise;
     APU_rect1* _rect1;

@@ -1,9 +1,3 @@
-/*    APU.cpp
-    Author: Aaron Wiginton
-
-    Description: APU for TinerasNES.
-*/ 
-
 /* ************* APU REGISTERS **************
 
     **** Square 1/Square 2 ****
@@ -134,7 +128,7 @@ void APU::init(CPU* cpu)
     _cpu = cpu;
 }
 
-const int APU::frameUpdate[2][5] = { { 3728, 7456, 11185, 14914, 14914 },
+const int APU::_frame_update[2][5] = { { 3728, 7456, 11185, 14914, 14914 },
                                      { 3728, 7456, 11185, 18640, 18640} };
 
 //    **********
@@ -144,8 +138,8 @@ void APU::renderFrame()
     #pragma region Frame Sequencer Updates (Envelope, Sweep, Length)
     for(int i = 0; i < 20; i++)
     {
-        apuCyclesTotal++;
-        if (apuCyclesTotal == frameUpdate[_frame_NTSC_PAL - 4][0] || apuCyclesTotal == frameUpdate[_frame_NTSC_PAL - 4][2])
+        _apu_cycles_total++;
+        if (_apu_cycles_total == _frame_update[_frame_NTSC_PAL - 4][0] || _apu_cycles_total == _frame_update[_frame_NTSC_PAL - 4][2])
         {
             // Rectangle 1
             _rect1->updateEnvelope();
@@ -160,7 +154,7 @@ void APU::renderFrame()
             _noise->updateEnvelope();
 
         }
-        else if(apuCyclesTotal == frameUpdate[_frame_NTSC_PAL - 4][1] || apuCyclesTotal == frameUpdate[_frame_NTSC_PAL - 4][3])
+        else if(_apu_cycles_total == _frame_update[_frame_NTSC_PAL - 4][1] || _apu_cycles_total == _frame_update[_frame_NTSC_PAL - 4][3])
         {
             // Rectangle 1
             _rect1->updateEnvelope();
@@ -180,29 +174,29 @@ void APU::renderFrame()
             _noise->updateEnvelope();
             _noise->updateLengthCounter();
 
-            if (_frame_IRQ_enabled && (_frame_NTSC_PAL != 5) && apuCyclesTotal == frameUpdate[_frame_NTSC_PAL - 4][3])
+            if (_frame_IRQ_enabled && (_frame_NTSC_PAL != 5) && _apu_cycles_total == _frame_update[_frame_NTSC_PAL - 4][3])
             {
                 _cpu->IRQPending = true;
             }
         }
 
-        if(apuCyclesTotal >= (unsigned int)frameUpdate[_frame_NTSC_PAL - 4][3])
-            apuCyclesTotal = 0;        
+        if(_apu_cycles_total >= (unsigned int)_frame_update[_frame_NTSC_PAL - 4][3])
+            _apu_cycles_total = 0;
     }
     #pragma endregion
 
     #pragma region Mix Output Samples
     // Clear Output Sample
-    outputSample = 0x00;
+    _output_sample = 0x00;
 
-    if(_rectangle_1_enabled && ch1Enable)
-        outputSample += _rect1->renderSample();
-    if(_rectangle_2_enabled && ch2Enable)
-        outputSample += _rect2->renderSample();
-    if(_triangle_enabled && ch3Enable)
-        outputSample += _triangle->renderSample();
-    if(_noise_enabled && ch4Enable)
-        outputSample += _noise->renderSample();
+    if(_rectangle_1_enabled && _ch1_enable)
+        _output_sample += _rect1->renderSample();
+    if(_rectangle_2_enabled && _ch2_enable)
+        _output_sample += _rect2->renderSample();
+    if(_triangle_enabled && _ch3_enable)
+        _output_sample += _triangle->renderSample();
+    if(_noise_enabled && _ch4_enable)
+        _output_sample += _noise->renderSample();
 
     // Increase Volume
     //outputSample *= 2;
@@ -210,38 +204,38 @@ void APU::renderFrame()
 
     #pragma region Write Samples to Buffer(s)
     // Write Samples to Write Buffer
-    if(apuWriteBufferPos < sizeof(apuWriteBuffer))
-        apuWriteBuffer[apuWriteBufferPos++] = outputSample;
+    if(_apu_write_buffer_pos < sizeof(apu_write_buffer))
+        apu_write_buffer[_apu_write_buffer_pos++] = _output_sample;
 
     // Wait for Write Buffer to fill to sizeof(apuPlayBuffer)
-    if(apuWriteBufferPos % sizeof(apuPlayBuffer) == 0)
-        WriteBufferReady = true;
+    if(_apu_write_buffer_pos % sizeof(_apu_play_buffer) == 0)
+        _write_buffer_ready = true;
 
     // Check for first full write
-    if(apuWriteBufferPos >= sizeof(apuPlayBuffer))
-        apuWriteBuffer_FirstFullWriteComplete = true;
+    if(_apu_write_buffer_pos >= sizeof(_apu_play_buffer))
+        _apu_write_buffer_first_full_write_complete = true;
 
     // Write sizeof(apuPlayBuffer) to Play Buffer
-    if(apuPlayBufferEmpty && apuWriteBuffer_FirstFullWriteComplete && WriteBufferReady)
+    if(_apu_play_buffer_empty && _apu_write_buffer_first_full_write_complete && _write_buffer_ready)
     {
-        WriteBufferReady = false;
+        _write_buffer_ready = false;
 
         // Write sizeof(apuPlayBuffer) to Play Buffer
-        for(int i = 0; i < sizeof(apuPlayBuffer); i++)
+        for(int i = 0; i < sizeof(_apu_play_buffer); i++)
         {
-            apuPlayBuffer[i] = apuWriteBuffer[apuPlayBufferPos++];
+            _apu_play_buffer[i] = apu_write_buffer[_apu_play_buffer_pos++];
         }
 
         // Reset Play Buffer Position
-        if(apuPlayBufferPos >= sizeof(apuWriteBuffer))
-            apuPlayBufferPos = 0;
+        if(_apu_play_buffer_pos >= sizeof(apu_write_buffer))
+            _apu_play_buffer_pos = 0;
 
         // Reset Write Buffer Position
-        if(apuPlayBufferPos == (sizeof(apuWriteBuffer) - sizeof(apuPlayBuffer)))
-            apuWriteBufferPos = 0;
+        if(_apu_play_buffer_pos == (sizeof(apu_write_buffer) - sizeof(_apu_play_buffer)))
+            _apu_write_buffer_pos = 0;
 
         // Indicate that Play Buffer is Full
-        apuPlayBufferEmpty = false;
+        _apu_play_buffer_empty = false;
 
         /******** DEBUGGING ********/
         //if(regUpdated)
@@ -280,8 +274,8 @@ void APU_callback(void* userdata, Uint8* stream, int len)    // APU Stuff
 //    APU Callback
 void APU::apu_callback(Uint8* stream, int len)    // APU Stuff
 {
-    memcpy(stream, apuPlayBuffer, len);
-    apuPlayBufferEmpty = true;
+    memcpy(stream, _apu_play_buffer, len);
+    _apu_play_buffer_empty = true;
 }
 
 //    **********
@@ -289,59 +283,54 @@ void APU::apu_callback(Uint8* stream, int len)    // APU Stuff
 void APU::init_audio()
 {
     /**** DEBUG ****/
-    sampleCounter_W = 0;
-    sampleCounter_R = 0;
+    _sample_counter_W = 0;
+    _sample_counter_R = 0;
 
     _reg_updated = false;
     /***************/
 
-    ///* Allocate a desired SDL_AudioSpec */
-    //audioSpecDesired = malloc(sizeof(SDL_AudioSpec));
-    ///* Allocate space for the obtained SDL_AudioSpec */
-    //audioSpecObtained = malloc(sizeof(SDL_AudioSpec));
+    _apu_cycles_total = 0;
 
-    apuCyclesTotal = 0;
+    _write_buffer_ready = false;
 
-    WriteBufferReady = false;
+    _dmc_enabled = false;         // DMC Enable
+    _noise_enabled = false;       // Noise Enable
+    _triangle_enabled = false;    // Triangle Enable
+    _rectangle_2_enabled = false; // Rectangle/Pulse 2 Enable
+    _rectangle_1_enabled = false; // Rectangle/Pulse 1 Enable
 
-    _dmc_enabled = false;        // DMC Enable
-    _noise_enabled = false;    // Noise Enable
-    _triangle_enabled = false;        // Triangle Enable
-    _rectangle_2_enabled = false;    // Rectangle/Pulse 2 Enable
-    _rectangle_1_enabled = false;    // Rectangle/Pulse 1 Enable
-
-    _frame_NTSC_PAL = 4;    // 4 or 5 Frame Count
-    _frame_counter = 0;    // Frame Counter
+    _frame_NTSC_PAL = 4; // 4 or 5 Frame Count
+    _frame_counter = 0;  // Frame Counter
 
     _frame_IRQ_enabled = false;
     _dmc_IRQ_enabled = false;
-    frameIRQPending = false;
-    IRQNextTime = false;
+    _frame_IRQ_pending = false;
+    _IRQ_next_time = false;
 
-    apuBufferPos = 0;
-    apuBufferLen = sizeof(apuPlayBuffer);
-    memset(apuPlayBuffer, 0, sizeof(apuPlayBuffer));
-    memset(apuWriteBuffer, 0, sizeof(apuWriteBuffer));
+    _apu_buffer_pos = 0;
+    _apu_buffer_len = sizeof(_apu_play_buffer);
+    memset(_apu_play_buffer, 0, sizeof(_apu_play_buffer));
+    memset(apu_write_buffer, 0, sizeof(apu_write_buffer));
 
-    apuPlayBufferPos = 0;
-    apuWriteBufferPos = 0;
-    apuWriteBufferPos_Last = 0;
+    _apu_play_buffer_pos = 0;
+    _apu_write_buffer_pos = 0;
+    _apu_write_buffer_pos_last = 0;
 
-    apuPlayBufferEmpty = true;
-    apuWriteBuffer_FirstFullWriteComplete = false;
+    _apu_play_buffer_empty = true;
+    _apu_write_buffer_first_full_write_complete = false;
 
     // Closes Audio Device before attempting to Open it
     SDL_CloseAudio();
 
     // Device Setup
-    audioSpecDesired.freq     = 44100;            // Sampling Rate;    
-    audioSpecDesired.format   = AUDIO_S8;        // Format
-    audioSpecDesired.channels = 1;                // Number of Channels
-    audioSpecDesired.samples  = apuBufferLen;    // Number of Samples in Buffer
-    audioSpecDesired.callback = APU_callback;    // Callback
-    audioSpecDesired.userdata = this;            
+    _audio_spec_desired.freq     = 44100;           // Sampling Rate;    
+    _audio_spec_desired.format   = AUDIO_S8;        // Format
+    _audio_spec_desired.channels = 1;               // Number of Channels
+    _audio_spec_desired.samples  = _apu_buffer_len; // Number of Samples in Buffer
+    _audio_spec_desired.callback = APU_callback;    // Callback
+    _audio_spec_desired.userdata = this;
 
-    if (SDL_OpenAudio(&audioSpecDesired, &audioSpecObtained) < 0)
+    if (SDL_OpenAudio(&_audio_spec_desired, &_audio_spec_obtained) < 0)
     {
         QMessageBox msg;
         msg.setWindowTitle("SDL Audio Error");
@@ -361,7 +350,7 @@ void APU::play()
 //    APU Pause
 void APU::pause()
 {
-    //SDL_PauseAudio(1);
+    SDL_PauseAudio(1);
 }
 
 //    **********
