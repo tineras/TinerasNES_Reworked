@@ -95,7 +95,6 @@
 
 #include "apu.h"
 #include "cpu.h"
-#include "SDL_audio.h"
 
 //    **********
 //    APU Constructor
@@ -130,21 +129,23 @@ APU::~APU()
     SDL_CloseAudio();
 }
 
-const int APU::frameUpdate[2][5] =    {    { 3728, 7456, 11185, 14914, 14914 },
-                                        { 3728, 7456, 11185, 18640, 18640} };
+void APU::init(CPU* cpu)
+{
+    _cpu = cpu;
+}
 
-void APU_callback(void*, Uint8*, int);    // APU Callback
-SDL_AudioSpec audioSpecDesired, audioSpecObtained;
+const int APU::frameUpdate[2][5] = { { 3728, 7456, 11185, 14914, 14914 },
+                                     { 3728, 7456, 11185, 18640, 18640} };
 
 //    **********
 //    APU something
-void APU::renderFrame(int apuCycles)
+void APU::renderFrame()
 {
     #pragma region Frame Sequencer Updates (Envelope, Sweep, Length)
     for(int i = 0; i < 20; i++)
     {
         apuCyclesTotal++;
-        if (apuCyclesTotal == frameUpdate[frameNTSC_PAL - 4][0] || apuCyclesTotal == frameUpdate[frameNTSC_PAL - 4][2])
+        if (apuCyclesTotal == frameUpdate[_frame_NTSC_PAL - 4][0] || apuCyclesTotal == frameUpdate[_frame_NTSC_PAL - 4][2])
         {
             // Rectangle 1
             _rect1->updateEnvelope();
@@ -159,7 +160,7 @@ void APU::renderFrame(int apuCycles)
             _noise->updateEnvelope();
 
         }
-        else if(apuCyclesTotal == frameUpdate[frameNTSC_PAL - 4][1] || apuCyclesTotal == frameUpdate[frameNTSC_PAL - 4][3])
+        else if(apuCyclesTotal == frameUpdate[_frame_NTSC_PAL - 4][1] || apuCyclesTotal == frameUpdate[_frame_NTSC_PAL - 4][3])
         {
             // Rectangle 1
             _rect1->updateEnvelope();
@@ -179,13 +180,13 @@ void APU::renderFrame(int apuCycles)
             _noise->updateEnvelope();
             _noise->updateLengthCounter();
 
-            if (frameIRQEnabled && (frameNTSC_PAL != 5) && apuCyclesTotal == frameUpdate[frameNTSC_PAL - 4][3])
+            if (_frame_IRQ_enabled && (_frame_NTSC_PAL != 5) && apuCyclesTotal == frameUpdate[_frame_NTSC_PAL - 4][3])
             {
                 _cpu->IRQPending = true;
             }
         }
 
-        if(apuCyclesTotal >= (unsigned int)frameUpdate[frameNTSC_PAL - 4][3])
+        if(apuCyclesTotal >= (unsigned int)frameUpdate[_frame_NTSC_PAL - 4][3])
             apuCyclesTotal = 0;        
     }
     #pragma endregion
@@ -194,13 +195,13 @@ void APU::renderFrame(int apuCycles)
     // Clear Output Sample
     outputSample = 0x00;
 
-    if(rect1Enable && ch1Enable)
+    if(_rectangle_1_enabled && ch1Enable)
         outputSample += _rect1->renderSample();
-    if(rect2Enable && ch2Enable)
+    if(_rectangle_2_enabled && ch2Enable)
         outputSample += _rect2->renderSample();
-    if(triEnable && ch3Enable)
+    if(_triangle_enabled && ch3Enable)
         outputSample += _triangle->renderSample();
-    if(noiseEnable && ch4Enable)
+    if(_noise_enabled && ch4Enable)
         outputSample += _noise->renderSample();
 
     // Increase Volume
@@ -268,16 +269,30 @@ void APU::renderFrame(int apuCycles)
 }
 
 //    **********
+//    APU Callback
+void APU_callback(void* userdata, Uint8* stream, int len)    // APU Stuff
+{
+    APU *apu = (APU*)userdata;
+    apu->apu_callback(stream, len);
+}
+
+//    **********
+//    APU Callback
+void APU::apu_callback(Uint8* stream, int len)    // APU Stuff
+{
+    memcpy(stream, apuPlayBuffer, len);
+    apuPlayBufferEmpty = true;
+}
+
+//    **********
 //    Init APU
 void APU::init_audio()
 {
     /**** DEBUG ****/
-
     sampleCounter_W = 0;
     sampleCounter_R = 0;
 
-    regUpdated = false;
-
+    _reg_updated = false;
     /***************/
 
     ///* Allocate a desired SDL_AudioSpec */
@@ -289,17 +304,17 @@ void APU::init_audio()
 
     WriteBufferReady = false;
 
-    dmcEnable = false;        // DMC Enable
-    noiseEnable = false;    // Noise Enable
-    triEnable = false;        // Triangle Enable
-    rect2Enable = false;    // Rectangle/Pulse 2 Enable
-    rect1Enable = false;    // Rectangle/Pulse 1 Enable
+    _dmc_enabled = false;        // DMC Enable
+    _noise_enabled = false;    // Noise Enable
+    _triangle_enabled = false;        // Triangle Enable
+    _rectangle_2_enabled = false;    // Rectangle/Pulse 2 Enable
+    _rectangle_1_enabled = false;    // Rectangle/Pulse 1 Enable
 
-    frameNTSC_PAL = 4;    // 4 or 5 Frame Count
-    frameCounter = 0;    // Frame Counter
+    _frame_NTSC_PAL = 4;    // 4 or 5 Frame Count
+    _frame_counter = 0;    // Frame Counter
 
-    frameIRQEnabled = false;
-    dmcIRQEnabled = false;
+    _frame_IRQ_enabled = false;
+    _dmc_IRQ_enabled = false;
     frameIRQPending = false;
     IRQNextTime = false;
 
@@ -328,40 +343,25 @@ void APU::init_audio()
 
     if (SDL_OpenAudio(&audioSpecDesired, &audioSpecObtained) < 0)
     {
-        // Open Audio FAIL
-        printf("SDL Audio Init Failed: APU.cpp:audio_init()\n");
-        fprintf(stderr, "Couldn't open audio: %s\n", SDL_GetError());
+        QMessageBox msg;
+        msg.setWindowTitle("SDL Audio Error");
+        msg.setText("Failed to initialize SDL Audio. Error: " + QString(SDL_GetError()));
+        msg.exec();
     }
 }
 
 //    **********
-//    APU Callback
-void APU_callback(void* userdata, Uint8* stream, int len)    // APU Stuff
-{
-    APU *apu = (APU *)userdata;
-    apu->apu_callback(stream, len);
-}
-
-//    **********
-//    APU Callback
-void APU::apu_callback(Uint8* stream, int len)    // APU Stuff
-{
-    memcpy(stream, apuPlayBuffer, len);
-    apuPlayBufferEmpty = true;
-}
-
-//    **********
 //    APU Play
-void APU::APU_play()
+void APU::play()
 {
     SDL_PauseAudio(0);
 }
 
 //    **********
 //    APU Pause
-void APU::APU_pause()
+void APU::pause()
 {
-    SDL_PauseAudio(1);
+    //SDL_PauseAudio(1);
 }
 
 //    **********
@@ -369,9 +369,4 @@ void APU::APU_pause()
 void APU::reset()
 {
     init_audio();
-}
-
-void APU::init(CPU* cpu)
-{
-    _cpu = cpu;
 }

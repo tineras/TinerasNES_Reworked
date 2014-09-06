@@ -9,6 +9,8 @@
 
 #include "common.h"
 
+#include "SDL_audio.h"
+
 #include "apu_noise.h"
 #include "apu_rect1.h"
 #include "apu_rect2.h"
@@ -35,26 +37,55 @@ public:
     APU_rect2* rect2() { return _rect2; }
     APU_triangle* triangle() { return _triangle; }
 
+    inline bool dmcIRQEnabled() { return _dmc_IRQ_enabled; }
+    inline bool frameIRQEnabled() { return _frame_IRQ_enabled; }
+    inline void setFrameIRQEnabled(bool frame_IRQ_enabled) { _frame_IRQ_enabled = frame_IRQ_enabled; }
+
+    //inline bool DMCEnabled() { return _dmc_enabled; }
+    inline bool triangleEnabled() { return _triangle_enabled; }
+    inline bool rectangle2Enabled() { return _rectangle_2_enabled; }
+    inline bool rectangle1Enabled() { return _rectangle_1_enabled; }
+
+    inline void setDMCEnabled(bool dmc_enabled) { _dmc_enabled = dmc_enabled; }
+    inline void setNoiseEnabled(bool noise_enabled) { _noise_enabled = noise_enabled; }
+    inline void setTrianlgeEnabled(bool triangle_enabled) { _triangle_enabled = triangle_enabled; }
+    inline void setRectangle1Enabled(bool rectangle_1_enabled) { _rectangle_1_enabled = rectangle_1_enabled; }
+    inline void setRectangle2Enabled(bool rectangle_2_enabled) { _rectangle_2_enabled = rectangle_2_enabled; }
+
+    inline unsigned char frameNTSCPAL() { return _frame_NTSC_PAL; }
+    inline void setFrameNTSCPAL(unsigned char frame_NTSC_PAL) { _frame_NTSC_PAL = frame_NTSC_PAL; }
+
+    inline void setFrameCounter(int frame_counter) { _frame_counter = 0; }
+
+    // DEBUG
+    inline bool regUpdated() { return _reg_updated; }
+    inline void setRegUpdated(bool reg_updated) { _reg_updated = reg_updated; }
+    void setRegUpdateValue(int index, unsigned char value) { _reg_update_values[index] = value; }
+    // DEBUG
+
     void updateEnvelope(); 
     void updateSweep();
     void checkSweepSilence();
     void updateLengthCounter();
 
-    void renderFrame(int);
-    void APU_play();
-    void APU_pause();
+    void renderFrame();
+    void play();
+    void pause();
 
     // Reset APU Variables
     void reset();
 
-    void apu_callback(Uint8*, int);
+    void apu_callback(Uint8* stream, int len);
+
+private:
+    void init_audio();    // Init APU
 
     /**** DEBUG ****/
     unsigned int sampleCounter_W;
     unsigned int sampleCounter_R;
 
-    bool regUpdated;
-    unsigned char regUpdateValues[4];
+    bool _reg_updated;
+    unsigned char _reg_update_values[4];
     /***************/
 
     const static int frameUpdate[2][5];
@@ -83,24 +114,23 @@ public:
     unsigned int dmcFlag;        // DMC IRG Flag Length
     unsigned int frameFlag;        // Frame Interrupt Flag Length
 
-    unsigned char frameNTSC_PAL;// 4 or 5 Frame Count
-    unsigned int frameCounter;    // Frame Counter
-    bool frameIRQEnabled;
-    bool dmcIRQEnabled;
+    unsigned char _frame_NTSC_PAL;// 4 or 5 Frame Count
+    unsigned int _frame_counter;    // Frame Counter
+    bool _frame_IRQ_enabled;
+    bool _dmc_IRQ_enabled;
 
     char outputSample;
 
-    bool dmcEnable;        // DMC Enable
-    bool noiseEnable;    // Noise Enable
-    bool triEnable;        // Triangle Enable
-    bool rect2Enable;    // Rectangle/Pulse 2 Enable
-    bool rect1Enable;    // Rectangle/Pulse 1 Enable
+    bool _dmc_enabled;      // DMC Enable
+    bool _noise_enabled;    // Noise Enable
+    bool _triangle_enabled;      // Triangle Enable
+    bool _rectangle_1_enabled;    // Rectangle/Pulse 1 Enable
+    bool _rectangle_2_enabled;    // Rectangle/Pulse 2 Enable
 
     bool frameIRQPending;
     bool IRQNextTime;
 
-private:
-    void init_audio();    // Init APU
+    SDL_AudioSpec audioSpecDesired, audioSpecObtained;
 
     // File stream for nestest file
     ofstream apuDebugFileStream;

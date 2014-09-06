@@ -218,8 +218,8 @@ unsigned char MEM::getMEM(int address)
     {
         unsigned char data;
 
-        if(_apu->dmcIRQEnabled)      data |= 0x80;    // Return DMC IRG Flag Status
-        if(_apu->frameIRQEnabled)    data |= 0x40;    // Return Frame Interrupt Flag Status
+        if(_apu->dmcIRQEnabled())      data |= 0x80;    // Return DMC IRG Flag Status
+        if(_apu->frameIRQEnabled())    data |= 0x40;    // Return Frame Interrupt Flag Status
 
         //if(_apu->dmcLength)          data |= 0x10;    // Return DMC Enabled Status
         if(_apu->noise()->length)    data |= 0x08;    // Return Noise Status
@@ -337,8 +337,8 @@ void MEM::setMEM(int address, unsigned char data)
                                                 Constant Decay Mode: Decay time (divider's period is set to N + 1) */
 
                 /**** DEBUG ****/
-                _apu->regUpdated = true;
-                _apu->regUpdateValues[0] = data;
+                _apu->setRegUpdated(true);
+                _apu->setRegUpdateValue(0, data);
                 /***************/
 
                 _apu->rect1()->dutyType = (data >> 6) & 0x03;
@@ -359,8 +359,8 @@ void MEM::setMEM(int address, unsigned char data)
                                         (sss) right shift amount    */
 
                 /**** DEBUG ****/
-                _apu->regUpdated = true;
-                _apu->regUpdateValues[1] = data;
+                _apu->setRegUpdated(true);
+                _apu->setRegUpdateValue(1, data);
                 /***************/
 
                 if(data & 0x80) _apu->rect1()->sweepEnable = true;    else _apu->rect1()->sweepEnable = false;
@@ -379,8 +379,8 @@ void MEM::setMEM(int address, unsigned char data)
                 /* $4002/6 pppp pppp    (pppp pppp) period low (8 LSB of wavelength)    */
 
                 /**** DEBUG ****/
-                _apu->regUpdated = true;
-                _apu->regUpdateValues[2] = data;
+                _apu->setRegUpdated(true);
+                _apu->setRegUpdateValue(2, data);
                 /***************/
 
                 _apu->rect1()->period = (_apu->rect1()->period & 0x700) | data;
@@ -393,8 +393,8 @@ void MEM::setMEM(int address, unsigned char data)
                                         (ppp) period high    */    
 
                 /**** DEBUG ****/
-                _apu->regUpdated = true;
-                _apu->regUpdateValues[3] = data;
+                _apu->setRegUpdated(true);
+                _apu->setRegUpdateValue(3, data);
                 /***************/
 
                 _apu->rect1()->length = _apu->rect1()->lengthTable[(data & 0xF8) >> 3];
@@ -505,7 +505,7 @@ void MEM::setMEM(int address, unsigned char data)
                 /*     $400B   llll lppp   (llll l) length index
                                         (ppp) period high    */    
 
-                if(_apu->triEnable)
+                if(_apu->triangleEnabled())
                     _apu->triangle()->length = _apu->triangle()->lengthTable[(data & 0xF8) >> 3];
                 _apu->triangle()->period = (_apu->triangle()->period & 0xFF) | ((data & 0x07) << 8);
 
@@ -548,7 +548,7 @@ void MEM::setMEM(int address, unsigned char data)
                 _apu->noise()->mode = (data >> 7) & 0x01;
                 int _period = (data & 0x0F);
                 
-                if(_apu->frameNTSC_PAL == 4)
+                if(_apu->frameNTSCPAL() == 4)
                     _apu->noise()->period = _apu->noise()->periodTable_NTSC[_period];
                 else
                     _apu->noise()->period = _apu->noise()->periodTable_PAL[_period];
@@ -579,18 +579,17 @@ void MEM::setMEM(int address, unsigned char data)
                                 
                                 ** Clears DMC Interrupt Flag after Write ($4010.7)*/
 
-            if(data & 0x10)    _apu->dmcEnable = true;    else _apu->dmcEnable = false;        // DMC Enable/Disable
+            if(data & 0x10)    _apu->setDMCEnabled(true);    else _apu->setDMCEnabled(false);        // DMC Enable/Disable
+            if(data & 0x08)    _apu->setNoiseEnabled(true);    else _apu->setNoiseEnabled(false);    // Noise Enable/Disable
+            if(data & 0x04)    _apu->setTrianlgeEnabled(true);    else _apu->setTrianlgeEnabled(false);        // Triangle Enable/Disable
+            if(data & 0x02)    _apu->setRectangle2Enabled(true);    else _apu->setRectangle2Enabled(false);    // Rect/Pulse 2 Enable/Disable
+            if(data & 0x01)    _apu->setRectangle1Enabled(true);    else _apu->setRectangle1Enabled(false);    // Rect/Pulse 1 Enable/Disable
 
-            if(data & 0x08)    _apu->noiseEnable = true;    else _apu->noiseEnable = false;    // Noise Enable/Disable
-            if(data & 0x04)    _apu->triEnable = true;    else _apu->triEnable = false;        // Triangle Enable/Disable
-            if(data & 0x02)    _apu->rect2Enable = true;    else _apu->rect2Enable = false;    // Rect/Pulse 2 Enable/Disable
-            if(data & 0x01)    _apu->rect1Enable = true;    else _apu->rect1Enable = false;    // Rect/Pulse 1 Enable/Disable
-
-            if(!_apu->triEnable)
+            if(!_apu->triangleEnabled())
                 _apu->triangle()->length = 0;
-            if(!_apu->rect2Enable)
+            if(!_apu->rectangle2Enabled())
                 _apu->rect2()->length = 0;
-            if(!_apu->rect1Enable)
+            if(!_apu->rectangle1Enabled())
                 _apu->rect1()->length = 0;
         }
 
@@ -604,9 +603,9 @@ void MEM::setMEM(int address, unsigned char data)
                                         ** If an interrupt flag was set at the same moment of the read,
                                             it will read back as 1 but it will not be cleared.    */
 
-            if(data & 0x80)    _apu->frameNTSC_PAL = 5;    else _apu->frameNTSC_PAL = 4;    // 4 or 5 Frame Count
-            _apu->frameCounter = 0;    // Reset Frame Counter
-            if(data & 0x40) _apu->frameIRQEnabled = false; else _apu->frameIRQEnabled = true;
+            if(data & 0x80)    _apu->setFrameNTSCPAL(5);    else _apu->setFrameNTSCPAL(4);    // 4 or 5 Frame Count
+            _apu->setFrameCounter(0);    // Reset Frame Counter
+            if(data & 0x40) _apu->setFrameIRQEnabled(false); else _apu->setFrameIRQEnabled(true);
         }
         #pragma endregion
 

@@ -80,7 +80,7 @@ void TinerasNES::run()
     _frame_timer.start();
 
     // Enable Audio
-    _apu->APU_play();
+    _apu->play();
 
     // TODO: REMOVE ME
     int blah = 0;
@@ -98,8 +98,9 @@ void TinerasNES::run()
         _apu_frame_count += elapsed_cpu_cycles;
         if(_apu_frame_count >= 40) // Renders a frame roughly 44100 times per second
         {
-            _apu->renderFrame(elapsed_cpu_cycles);
+            _apu->renderFrame();
 
+            // TODO: Check...What in the world am I doing here??
             _apu_frame_count -= 40;
         }
 

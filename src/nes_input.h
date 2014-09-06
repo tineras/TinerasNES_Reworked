@@ -1,13 +1,5 @@
-/*    NES_INPUT.h
-    Author: Aaron Wiginton
-
-    Description: Handles keyboard and mouse input.
-*/
-
 #ifndef _NES_INPUT_HEADER
 #define _NES_INPUT_HEADER
-
-//class TinerasNES;
 
 class NES_INPUT
 {
@@ -15,20 +7,14 @@ public:
     NES_INPUT();
     ~NES_INPUT();
 
-    unsigned char joypadOne;
-    unsigned char j, joypad;
-
     void pressButton(unsigned char button);
     void releaseButton(unsigned char button);
 
     unsigned char readJoypad();
     void writeJoypad(unsigned char);
-    
-    // Reset Input Variables
-    void reset();
 
 private:
-
-
+    unsigned char _joypad_one;
+    unsigned char _j, _joypad;
 };
 #endif //_NES_INPUT_HEADER
