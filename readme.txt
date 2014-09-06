@@ -32,9 +32,9 @@ Libraries Used:
 - Qt 5.3.1 for Windows 32-bit (VS 2010, OpenGL, 537 MB)
 [Ui]
 (http://download.qt-project.org/official_releases/qt/5.3/5.3.1/qt-opensource-windows-x86-msvc2010_opengl-5.3.1.exe)
-- SDL 1.2.15 - Drawing, Joystick Input, Audio (SDL is temporarily removed)
+- SDL2 2.0.3 - Drawing, Joystick Input, Audio (SDL is temporarily removed)
 [Drawing, Joystick Input, Audio]
-(https://www.libsdl.org/release/SDL-devel-1.2.15-VC.zip)
+(https://www.libsdl.org/release/SDL2-devel-2.0.3-VC.zip)
 
 Project IDE and Misc:
 - Visual Studio 2010 Premium

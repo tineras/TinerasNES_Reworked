@@ -1,10 +1,15 @@
 #ifndef TINERASNES_H
 #define TINERASNES_H
 
+#include "common.h"
+
 #include <QtWidgets/QMainWindow>
 #include "ui_tinerasnes.h"
 
-#include "common.h"
+// http://www.ginkgobitter.org/sdl/?SDL_SetMainReady
+// To prevent using SDL's main as an entry point
+#define SDL_MAIN_HANDLED
+#include "SDL.h"
 
 class CPU;
 class MEM;

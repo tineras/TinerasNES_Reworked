@@ -18,6 +18,10 @@ TinerasNES::TinerasNES(QWidget *parent)
 
     connect(_ui.actionOpen, SIGNAL(triggered()), this, SLOT(openFile()));
     connect(_ui.actionExit, SIGNAL(triggered()), this, SLOT(quit()));
+
+    // http://www.ginkgobitter.org/sdl/?SDL_SetMainReady
+    SDL_SetMainReady();
+    SDL_Init(SDL_INIT_EVERYTHING);
 }
 
 TinerasNES::~TinerasNES()
