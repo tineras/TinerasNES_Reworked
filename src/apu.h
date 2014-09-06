@@ -14,8 +14,6 @@
 #include "apu_rect2.h"
 #include "apu_triangle.h"
 
-//using namespace std;
-
 typedef unsigned char Uint8;
 
 class APU_noise;
@@ -50,14 +48,13 @@ public:
     void reset();
 
     void apu_callback(Uint8*, int);
-    /**** DEBUG ****/
 
+    /**** DEBUG ****/
     unsigned int sampleCounter_W;
     unsigned int sampleCounter_R;
 
     bool regUpdated;
     unsigned char regUpdateValues[4];
-
     /***************/
 
     const static int frameUpdate[2][5];

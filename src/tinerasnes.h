@@ -6,7 +6,7 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_tinerasnes.h"
 
-// http://www.ginkgobitter.org/sdl/?SDL_SetMainReady
+// https://wiki.libsdl.org/SDL_SetMainReady
 // To prevent using SDL's main as an entry point
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
@@ -15,6 +15,7 @@ class CPU;
 class MEM;
 class PPU;
 class APU;
+class NES_INPUT;
 
 // NES Emu Resolution
 static const int k_nes_res_x = 256;
@@ -99,16 +100,17 @@ public:
 
 protected:
     virtual void closeEvent(QCloseEvent* event);
+    virtual void keyPressEvent(QKeyEvent* event);
+    virtual void keyReleaseEvent(QKeyEvent* event);
 
 private slots:
     void run();
     void openFile();
     void quit();
 
-    void timerTimeout();
-
 private:
-    void initialize();
+    void init();
+    void initSDL();
 
     bool _running;
 
@@ -117,6 +119,8 @@ private:
     unsigned int _master_cpu_cycle;
     unsigned int _current_cpu_cycle;
 
+    int _apu_frame_count;
+
     QElapsedTimer _frame_timer;
 
     Ui::MenuBar _ui;
@@ -124,6 +128,7 @@ private:
     MEM* _mem;
     PPU* _ppu;
     APU* _apu;
+    NES_INPUT* _nes_input;
 };
 
 #endif // TINERASNES_H

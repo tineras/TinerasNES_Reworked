@@ -6,6 +6,7 @@
 class TinerasNES;
 class PPU;
 class APU;
+class NES_INPUT;
 
 class MEM
 {
@@ -13,7 +14,7 @@ public:
     MEM(TinerasNES* tn);
     ~MEM();
 
-    void init(PPU* ppu, APU* apu);
+    void init(PPU* ppu, APU* apu, NES_INPUT* nes_input);
 
     void setCHRPRGBanks(char num_CHR_banks, char num_PRG_banks);
     void setHorizontalVerticalMirrorBit(char value);
@@ -94,5 +95,6 @@ private:
     TinerasNES *_tn;
     PPU* _ppu;
     APU* _apu;
+    NES_INPUT* _nes_input;
 };
 #endif //_MEM_HEADER

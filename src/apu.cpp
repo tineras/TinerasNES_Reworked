@@ -95,13 +95,46 @@
 
 #include "apu.h"
 #include "cpu.h"
-//#include "SDL_audio.h"
+#include "SDL_audio.h"
+
+//    **********
+//    APU Constructor
+APU::APU() :
+    _rect1(new APU_rect1()),
+    _rect2(new APU_rect2()),
+    _triangle(new APU_triangle()),
+    _noise(new APU_noise())
+{
+    // File Stream for APU Debugging
+    //apuDebugFileStream.open("apuDebug.txt");
+
+    // Set 'APU (this)' class pointer to local 'apu' pointer
+    //apu = this;
+
+    reset();
+}
+
+//    **********
+//    APU Destructor
+APU::~APU()
+{
+    delete _rect1;
+    delete _rect2;
+    delete _triangle;
+    delete _noise;
+
+    // Close APU Debugging File Stream
+    //apuDebugFileStream.close();
+
+    // Closes Audio Device
+    SDL_CloseAudio();
+}
 
 const int APU::frameUpdate[2][5] =    {    { 3728, 7456, 11185, 14914, 14914 },
                                         { 3728, 7456, 11185, 18640, 18640} };
 
 void APU_callback(void*, Uint8*, int);    // APU Callback
-//SDL_AudioSpec audioSpecDesired, audioSpecObtained;
+SDL_AudioSpec audioSpecDesired, audioSpecObtained;
 
 //    **********
 //    APU something
@@ -282,23 +315,23 @@ void APU::init_audio()
     apuPlayBufferEmpty = true;
     apuWriteBuffer_FirstFullWriteComplete = false;
 
-    //// Closes Audio Device before attempting to Open it
-    //SDL_CloseAudio();
+    // Closes Audio Device before attempting to Open it
+    SDL_CloseAudio();
 
-    //// Device Setup
-    //audioSpecDesired.freq     = 44100;            // Sampling Rate;    
-    //audioSpecDesired.format   = AUDIO_S8;        // Format
-    //audioSpecDesired.channels = 1;                // Number of Channels
-    //audioSpecDesired.samples  = apuBufferLen;    // Number of Samples in Buffer
-    //audioSpecDesired.callback = APU_callback;    // Callback
-    //audioSpecDesired.userdata = this;            
+    // Device Setup
+    audioSpecDesired.freq     = 44100;            // Sampling Rate;    
+    audioSpecDesired.format   = AUDIO_S8;        // Format
+    audioSpecDesired.channels = 1;                // Number of Channels
+    audioSpecDesired.samples  = apuBufferLen;    // Number of Samples in Buffer
+    audioSpecDesired.callback = APU_callback;    // Callback
+    audioSpecDesired.userdata = this;            
 
-    //if (SDL_OpenAudio(&audioSpecDesired, &audioSpecObtained) < 0)
-    //{
-    //    // Open Audio FAIL
-    //    printf("SDL Audio Init Failed: APU.cpp:audio_init()\n");
-    //    fprintf(stderr, "Couldn't open audio: %s\n", SDL_GetError());
-    //}
+    if (SDL_OpenAudio(&audioSpecDesired, &audioSpecObtained) < 0)
+    {
+        // Open Audio FAIL
+        printf("SDL Audio Init Failed: APU.cpp:audio_init()\n");
+        fprintf(stderr, "Couldn't open audio: %s\n", SDL_GetError());
+    }
 }
 
 //    **********
@@ -321,14 +354,14 @@ void APU::apu_callback(Uint8* stream, int len)    // APU Stuff
 //    APU Play
 void APU::APU_play()
 {
-    //SDL_PauseAudio(0);
+    SDL_PauseAudio(0);
 }
 
 //    **********
 //    APU Pause
 void APU::APU_pause()
 {
-    //SDL_PauseAudio(1);
+    SDL_PauseAudio(1);
 }
 
 //    **********
@@ -341,33 +374,4 @@ void APU::reset()
 void APU::init(CPU* cpu)
 {
     _cpu = cpu;
-}
-
-//    **********
-//    APU Constructor
-APU::APU()
-{
-    _rect1 = new APU_rect1();
-    _rect2 = new APU_rect2();
-    _triangle = new APU_triangle();
-    _noise = new APU_noise();
-
-    // File Stream for APU Debugging
-    //apuDebugFileStream.open("apuDebug.txt");
-
-    // Set 'APU (this)' class pointer to local 'apu' pointer
-    //apu = this;
-
-    reset();
-}
-
-//    **********
-//    APU Destructor
-APU::~APU()
-{
-    // Close APU Debugging File Stream
-    //apuDebugFileStream.close();
-
-    // Closes Audio Device
-    //SDL_CloseAudio();
 }

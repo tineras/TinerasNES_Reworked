@@ -18,6 +18,9 @@ public:
     unsigned char joypadOne;
     unsigned char j, joypad;
 
+    void pressButton(unsigned char button);
+    void releaseButton(unsigned char button);
+
     unsigned char readJoypad();
     void writeJoypad(unsigned char);
     

@@ -4,13 +4,20 @@
 #include "mem.h"
 #include "ppu.h"
 #include "apu.h"
+#include "nes_input.h"
 
 TinerasNES::TinerasNES(QWidget *parent)
     : QMainWindow(parent),
+    _cpu(nullptr),
+    _mem(nullptr),
+    _ppu(nullptr),
+    _apu(nullptr),
+    _nes_input(nullptr),
     _running(false),
     _panel_widget(new PanelWidget(this)),
     _master_cpu_cycle(0),
-    _current_cpu_cycle(0)
+    _current_cpu_cycle(0),
+    _apu_frame_count(0)
 {
     _ui.setupUi(this);
 
@@ -19,9 +26,7 @@ TinerasNES::TinerasNES(QWidget *parent)
     connect(_ui.actionOpen, SIGNAL(triggered()), this, SLOT(openFile()));
     connect(_ui.actionExit, SIGNAL(triggered()), this, SLOT(quit()));
 
-    // http://www.ginkgobitter.org/sdl/?SDL_SetMainReady
-    SDL_SetMainReady();
-    SDL_Init(SDL_INIT_EVERYTHING);
+    initSDL();
 }
 
 TinerasNES::~TinerasNES()
@@ -29,8 +34,40 @@ TinerasNES::~TinerasNES()
 
 }
 
-void TinerasNES::timerTimeout()
+void TinerasNES::init()
 {
+    if (_cpu != nullptr)
+        delete _cpu;
+
+    if (_mem != nullptr)
+        delete _mem;
+
+    if (_ppu != nullptr)
+        delete _ppu;
+
+    if (_apu != nullptr)
+        delete _apu;
+
+    if (_nes_input != nullptr)
+        delete _nes_input;
+
+    _cpu = new CPU();
+    _mem = new MEM(this);
+    _ppu = new PPU(this);
+    _apu = new APU();
+    _nes_input = new NES_INPUT();
+
+    _cpu->init(_mem);
+    _mem->init(_ppu, _apu, _nes_input);
+    _ppu->init(_cpu, _mem);
+    _apu->init(_cpu);
+}
+
+void TinerasNES::initSDL()
+{
+    // https://wiki.libsdl.org/SDL_SetMainReady
+    SDL_SetMainReady();
+    SDL_Init(SDL_INIT_EVERYTHING);
 }
 
 void TinerasNES::run()
@@ -41,6 +78,9 @@ void TinerasNES::run()
     _panel_widget->setShouldDraw(true);
 
     _frame_timer.start();
+
+    // Enable Audio
+    _apu->APU_play();
 
     // TODO: REMOVE ME
     int blah = 0;
@@ -53,6 +93,15 @@ void TinerasNES::run()
 
         if(_master_cpu_cycle > 1789772) // TODO: Check...How did I arrive at this number?
             _master_cpu_cycle = 0;
+
+        // Run APU
+        _apu_frame_count += elapsed_cpu_cycles;
+        if(_apu_frame_count >= 40) // Renders a frame roughly 44100 times per second
+        {
+            _apu->renderFrame(elapsed_cpu_cycles);
+
+            _apu_frame_count -= 40;
+        }
 
         // Run PPU
         _ppu->run(_current_cpu_cycle);
@@ -99,24 +148,101 @@ void TinerasNES::run()
     QApplication::quit();
 }
 
-void TinerasNES::initialize()
+void TinerasNES::keyPressEvent(QKeyEvent* event)
 {
-    _cpu = new CPU();
-    _mem = new MEM(this);
-    _ppu = new PPU(this);
-    _apu = new APU();
+    // Call base class key press event
+    QWidget::keyPressEvent(event);
 
-    _cpu->init(_mem);
-    _mem->init(_ppu, _apu);
-    _ppu->init(_cpu, _mem);
-    _apu->init(_cpu);
+    int key = event->key();
+
+    if (key == Qt::Key_W)
+    {
+        _nes_input->pressButton(0x10);
+    }
+    else if (key == Qt::Key_A)
+    {
+        _nes_input->pressButton(0x40);
+    }
+    else if (key == Qt::Key_S)
+    {
+        _nes_input->pressButton(0x20);
+    }
+    else if (key == Qt::Key_D)
+    {
+        _nes_input->pressButton(0x80);
+    }
+
+    else if (key == Qt::Key_F)
+    {
+        _nes_input->pressButton(0x04);
+    }
+    else if (key == Qt::Key_G)
+    {
+        _nes_input->pressButton(0x08);
+    }
+
+    else if (key == Qt::Key_H)
+    {
+        _nes_input->pressButton(0x02);
+    }
+    else if (key == Qt::Key_J)
+    {
+        _nes_input->pressButton(0x01);
+    }
+}
+
+void TinerasNES::keyReleaseEvent(QKeyEvent* event)
+{
+    // Call base class key press event
+    QWidget::keyPressEvent(event);
+
+    int key = event->key();
+
+    if (key == Qt::Key_W)
+    {
+        _nes_input->releaseButton(0xEF);
+    }
+    else if (key == Qt::Key_A)
+    {
+        _nes_input->releaseButton(0xBF);
+    }
+    else if (key == Qt::Key_S)
+    {
+        _nes_input->releaseButton(0xDF);
+    }
+    else if (key == Qt::Key_D)
+    {
+        _nes_input->releaseButton(0x7F);
+    }
+
+    else if (key == Qt::Key_F)
+    {
+        _nes_input->releaseButton(0xFB);
+    }
+    else if (key == Qt::Key_G)
+    {
+        _nes_input->releaseButton(0xF7);
+    }
+
+    else if (key == Qt::Key_H)
+    {
+        _nes_input->releaseButton(0xFD);
+    }
+    else if (key == Qt::Key_J)
+    {
+        _nes_input->releaseButton(0xFE);
+    }
 }
 
 void TinerasNES::openFile()
 {
-    initialize();
+    init();
 
+#if 0
     QString filename = QFileDialog::getOpenFileName(this, "Select NES Rom", "c:/emu/TestRoms", "NES file (*.nes);;Zipped NES file (*.zip)");
+#else
+    QString filename = QFileDialog::getOpenFileName(this, "Select NES Rom", "E:/Emulators/TestRoms", "NES file (*.nes);;Zipped NES file (*.zip)");
+#endif
 
     if (filename.isEmpty())
         return;

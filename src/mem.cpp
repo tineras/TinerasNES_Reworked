@@ -47,9 +47,9 @@
 
 #include "mem.h"
 #include "TinerasNES.h"
-//#include "NES_INPUT.h"
 #include "ppu.h"
 #include "apu.h"
+#include "nes_input.h"
 
 //    **********
 //    MEM Constructor
@@ -69,10 +69,11 @@ MEM::~MEM()
 {
 }
 
-void MEM::init(PPU* ppu, APU* apu)
+void MEM::init(PPU* ppu, APU* apu, NES_INPUT* nes_input)
 {
     _ppu = ppu;
     _apu = apu;
+    _nes_input = nes_input;
 }
 
 void MEM::setCHRPRGBanks(char num_CHR_banks, char num_PRG_banks)
@@ -234,8 +235,7 @@ unsigned char MEM::getMEM(int address)
     else if (address == 0x4016)
     {
         // Read Joypad 1
-        //return tn->nes_input->readJoypad();
-        return 0x40;
+        return _nes_input->readJoypad();
     }
 
     // Address Masking for PPU at 2008-3FFF
@@ -301,7 +301,7 @@ void MEM::setMEM(int address, unsigned char data)
     else if (address == 0x4016)
     {
         // Write to Joypad 1
-        //tn->nes_input->writeJoypad(data);
+        _nes_input->writeJoypad(data);
     }
     #pragma endregion
 

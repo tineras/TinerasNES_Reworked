@@ -1,5 +1,14 @@
-//#include "windows.h"
-#include "NES_INPUT.h"
+#include "nes_input.h"
+
+void NES_INPUT::pressButton(unsigned char button)
+{
+    joypadOne |= button;
+}
+
+void NES_INPUT::releaseButton(unsigned char button)
+{
+    joypadOne &= button;
+}
 
 unsigned char NES_INPUT::readJoypad()
 {
