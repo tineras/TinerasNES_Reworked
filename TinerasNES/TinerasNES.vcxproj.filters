@@ -74,7 +74,16 @@
     <ClCompile Include="..\src\tinerasnes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\qrc_tinerasnes.cpp">
+    <ClCompile Include="GeneratedFiles\Debug\moc_main_window.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_main_window.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\main_window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\qrc_main_window.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -82,11 +91,14 @@
     <CustomBuild Include="..\src\tinerasnes.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\src\tinerasnes.qrc">
-      <Filter>Resource Files</Filter>
+    <CustomBuild Include="..\src\main_window.h">
+      <Filter>Header Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\src\tinerasnes.ui">
+    <CustomBuild Include="..\src\main_window.ui">
       <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\src\main_window.qrc">
+      <Filter>Resource Files</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
@@ -120,7 +132,7 @@
     <ClInclude Include="..\src\apu_rect1.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_tinerasnes.h">
+    <ClInclude Include="GeneratedFiles\ui_main_window.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>

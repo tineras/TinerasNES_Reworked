@@ -1,4 +1,5 @@
 #include "tinerasnes.h"
+#include "main_window.h"
 
 #include "cpu.h"
 #include "mem.h"
@@ -7,24 +8,22 @@
 #include "nes_input.h"
 
 TinerasNES::TinerasNES(QWidget *parent)
-    : QMainWindow(parent),
+    : QObject(parent),
     _cpu(nullptr),
     _mem(nullptr),
     _ppu(nullptr),
     _apu(nullptr),
     _nes_input(nullptr),
     _running(false),
-    _panel_widget(new PanelWidget(this)),
+    //_panel_widget(new PanelWidget(this)), // dont do this in the constructor
     _master_cpu_cycle(0),
     _current_cpu_cycle(0),
     _apu_frame_count(0)
 {
-    _ui.setupUi(this);
+    //_ui.gridLayout->addWidget(_panel_widget);
 
-    _ui.gridLayout->addWidget(_panel_widget);
-
-    connect(_ui.actionOpen, SIGNAL(triggered()), this, SLOT(openFile()));
-    connect(_ui.actionExit, SIGNAL(triggered()), this, SLOT(quit()));
+    //connect(_ui.actionOpen, SIGNAL(triggered()), this, SLOT(openFile()));
+    //connect(_ui.actionExit, SIGNAL(triggered()), this, SLOT(quit()));
 
     initSDL();
 }
@@ -36,6 +35,8 @@ TinerasNES::~TinerasNES()
 
 void TinerasNES::init()
 {
+    //_panel_widget = new PanelWidget(this);
+
     if (_cpu != nullptr)
         delete _cpu;
 
@@ -82,8 +83,6 @@ void TinerasNES::run()
     // Enable Audio
     _apu->play();
 
-    // TODO: REMOVE ME
-    int blah = 0;
     while (_running)
     {
         // Run CPU - Execute Opcode
@@ -135,27 +134,13 @@ void TinerasNES::run()
                 _current_cpu_cycle = 0;
                 _ppu->setReadyToRender(false);
                 _frame_timer.restart();
-
-                // TODO: Don't trigger processEvents too often
-                if (blah++ >= 2)
-                {
-                    QApplication::processEvents();
-                    blah = 0;
-                }
             }
         }
     }
-
-    QApplication::quit();
 }
 
-void TinerasNES::keyPressEvent(QKeyEvent* event)
+void TinerasNES::onKeyPressEvent(int key)
 {
-    // Call base class key press event
-    QWidget::keyPressEvent(event);
-
-    int key = event->key();
-
     if (key == Qt::Key_W)
     {
         _nes_input->pressButton(0x10);
@@ -192,13 +177,8 @@ void TinerasNES::keyPressEvent(QKeyEvent* event)
     }
 }
 
-void TinerasNES::keyReleaseEvent(QKeyEvent* event)
+void TinerasNES::onKeyReleaseEvent(int key)
 {
-    // Call base class key press event
-    QWidget::keyPressEvent(event);
-
-    int key = event->key();
-
     if (key == Qt::Key_W)
     {
         _nes_input->releaseButton(0xEF);
@@ -240,9 +220,9 @@ void TinerasNES::openFile()
     init();
 
 #if 0
-    QString filename = QFileDialog::getOpenFileName(this, "Select NES Rom", "c:/emu/TestRoms", "NES file (*.nes);;Zipped NES file (*.zip)");
+    QString filename = QFileDialog::getOpenFileName(dynamic_cast<QWidget*>(sender()), "Select NES Rom", "c:/emu/TestRoms", "NES file (*.nes);;Zipped NES file (*.zip)");
 #else
-    QString filename = QFileDialog::getOpenFileName(this, "Select NES Rom", "E:/Emulators/TestRoms", "NES file (*.nes);;Zipped NES file (*.zip)");
+    QString filename = QFileDialog::getOpenFileName(dynamic_cast<QWidget*>(sender()), "Select NES Rom", "E:/Emulators/TestRoms", "NES file (*.nes);;Zipped NES file (*.zip)");
 #endif
 
     if (filename.isEmpty())
@@ -377,12 +357,5 @@ void TinerasNES::openFile()
 
 void TinerasNES::quit()
 {
-    _running = false;
-}
-
-void TinerasNES::closeEvent(QCloseEvent* event)
-{
-    QWidget::closeEvent(event);
-
     _running = false;
 }

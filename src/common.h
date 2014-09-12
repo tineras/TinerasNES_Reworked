@@ -7,11 +7,10 @@
 #include <ctype.h>
 #include <math.h>
 
-//#include <windows.h>
-
-#include <QPainter>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QFileDialog>
-#include <QElapsedTimer>
-#include <QKeyEvent>
 #include <QMessageBox>
+#include <QPainter>
+#include <QKeyEvent>
+#include <QThread>

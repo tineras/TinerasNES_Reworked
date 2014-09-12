@@ -49,7 +49,7 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="tinerasnes.qrc"/>
+  <include location="main_window.qrc"/>
  </resources>
  <connections/>
 </ui>

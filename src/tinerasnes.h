@@ -3,9 +3,6 @@
 
 #include "common.h"
 
-#include <QtWidgets/QMainWindow>
-#include "ui_tinerasnes.h"
-
 // https://wiki.libsdl.org/SDL_SetMainReady
 // To prevent using SDL's main as an entry point
 #define SDL_MAIN_HANDLED
@@ -16,6 +13,8 @@ class MEM;
 class PPU;
 class APU;
 class NES_INPUT;
+
+class MainWindow;
 
 // NES Emu Resolution
 static const int k_nes_res_x = 256;
@@ -87,7 +86,7 @@ private:
     unsigned char* _draw_buffer;
 };
 
-class TinerasNES : public QMainWindow
+class TinerasNES : public QObject
 {
     Q_OBJECT
 
@@ -99,13 +98,12 @@ public:
     void bumpCurrentCPUCycle(int add_cycles) { _current_cpu_cycle += add_cycles; }
 
 protected:
-    virtual void closeEvent(QCloseEvent* event);
-    virtual void keyPressEvent(QKeyEvent* event);
-    virtual void keyReleaseEvent(QKeyEvent* event);
 
-private slots:
+public slots:
     void run();
     void openFile();
+    void onKeyPressEvent(int key);
+    void onKeyReleaseEvent(int key);
     void quit();
 
 private:
@@ -123,7 +121,6 @@ private:
 
     QElapsedTimer _frame_timer;
 
-    Ui::MenuBar _ui;
     CPU* _cpu;
     MEM* _mem;
     PPU* _ppu;
