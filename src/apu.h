@@ -72,7 +72,7 @@ public:
     void apu_callback(Uint8* stream, int len);
 
 private:
-    void init_audio();    // Init APU
+    void init_audio();
 
     /**** DEBUG ****/
     unsigned int _sample_counter_W;
@@ -81,8 +81,6 @@ private:
     bool _reg_updated;
     unsigned char _reg_update_values[4];
     /***************/
-
-    const static int _frame_update[2][5];
 
     bool _ch1_enable;
     bool _ch2_enable;
@@ -106,6 +104,7 @@ private:
 
     unsigned char _frame_NTSC_PAL;  // 4 or 5 Frame Count
     unsigned int _frame_counter;    // Frame Counter
+
     bool _frame_IRQ_enabled;
     bool _dmc_IRQ_enabled;
 
@@ -119,8 +118,8 @@ private:
 
     // UNUSED ??
     int _previous_write;
-    unsigned int _dmc_flag;           // DMC IRG Flag Length
-    unsigned int _frame_flag;         // Frame Interrupt Flag Length
+    unsigned int _dmc_flag;       // DMC IRG Flag Length
+    unsigned int _frame_flag;     // Frame Interrupt Flag Length
     bool _frame_IRQ_pending;
     bool _IRQ_next_time;
     // UNUSED ??

@@ -128,8 +128,8 @@ void APU::init(CPU* cpu)
     _cpu = cpu;
 }
 
-const int APU::_frame_update[2][5] = { { 3728, 7456, 11185, 14914, 14914 },
-                                     { 3728, 7456, 11185, 18640, 18640} };
+static const int _frame_update[2][5] = { { 3728, 7456, 11185, 14914, 14914 },
+                                         { 3728, 7456, 11185, 18640, 18640 } };
 
 //    **********
 //    APU something
@@ -289,9 +289,34 @@ void APU::init_audio()
     _reg_updated = false;
     /***************/
 
-    _apu_cycles_total = 0;
+    _ch1_enable = true;
+    _ch2_enable = true;
+    _ch3_enable = true;
+    _ch4_enable = true;
+    _ch5_enable = true;
 
     _write_buffer_ready = false;
+
+    _apu_cycles_total = 0;
+
+    memset(_apu_play_buffer, 0, sizeof(_apu_play_buffer));
+    memset(apu_write_buffer, 0, sizeof(apu_write_buffer));
+
+    _apu_play_buffer_pos = 0;
+    _apu_write_buffer_pos = 0;
+    _apu_write_buffer_pos_last = 0;
+    _apu_buffer_pos = 0;
+    _apu_buffer_len = sizeof(_apu_play_buffer);
+    _apu_play_buffer_empty = true;
+    _apu_write_buffer_first_full_write_complete = false;
+
+    _frame_NTSC_PAL = 4; // 4 or 5 Frame Count
+    _frame_counter = 0;  // Frame Counter
+
+    _frame_IRQ_enabled = false;
+    _dmc_IRQ_enabled = false;
+
+    _output_sample = 0x00;
 
     _dmc_enabled = false;         // DMC Enable
     _noise_enabled = false;       // Noise Enable
@@ -299,25 +324,13 @@ void APU::init_audio()
     _rectangle_2_enabled = false; // Rectangle/Pulse 2 Enable
     _rectangle_1_enabled = false; // Rectangle/Pulse 1 Enable
 
-    _frame_NTSC_PAL = 4; // 4 or 5 Frame Count
-    _frame_counter = 0;  // Frame Counter
-
-    _frame_IRQ_enabled = false;
-    _dmc_IRQ_enabled = false;
+    // UNUSED ??
+    _previous_write = false;
+    _dmc_flag = false;           // DMC IRG Flag Length
+    _frame_flag = false;         // Frame Interrupt Flag Length
     _frame_IRQ_pending = false;
     _IRQ_next_time = false;
-
-    _apu_buffer_pos = 0;
-    _apu_buffer_len = sizeof(_apu_play_buffer);
-    memset(_apu_play_buffer, 0, sizeof(_apu_play_buffer));
-    memset(apu_write_buffer, 0, sizeof(apu_write_buffer));
-
-    _apu_play_buffer_pos = 0;
-    _apu_write_buffer_pos = 0;
-    _apu_write_buffer_pos_last = 0;
-
-    _apu_play_buffer_empty = true;
-    _apu_write_buffer_first_full_write_complete = false;
+    // UNUSED ??
 
     // Closes Audio Device before attempting to Open it
     SDL_CloseAudio();
@@ -332,10 +345,9 @@ void APU::init_audio()
 
     if (SDL_OpenAudio(&_audio_spec_desired, &_audio_spec_obtained) < 0)
     {
-        QMessageBox msg;
-        msg.setWindowTitle("SDL Audio Error");
-        msg.setText("Failed to initialize SDL Audio. Error: " + QString(SDL_GetError()));
-        msg.exec();
+        printf("Failed to initialize SDL Audio. Error: %s\n", SDL_GetError());
+
+        throw;
     }
 }
 
