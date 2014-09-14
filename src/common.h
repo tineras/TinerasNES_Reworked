@@ -10,7 +10,9 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileDialog>
+#include <QtOpenGL/QGLWidget>
 #include <QMessageBox>
 #include <QPainter>
 #include <QKeyEvent>
 #include <QThread>
+#include <QTimer>

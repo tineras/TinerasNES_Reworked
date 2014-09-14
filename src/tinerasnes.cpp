@@ -7,24 +7,20 @@
 #include "apu.h"
 #include "nes_input.h"
 
-TinerasNES::TinerasNES(QWidget *parent)
-    : QObject(parent),
+TinerasNES::TinerasNES() :
     _cpu(nullptr),
     _mem(nullptr),
     _ppu(nullptr),
     _apu(nullptr),
     _nes_input(nullptr),
     _running(false),
-    //_panel_widget(new PanelWidget(this)), // dont do this in the constructor
+    _quit(false),
+    _drawing_frame(false),
     _master_cpu_cycle(0),
     _current_cpu_cycle(0),
-    _apu_frame_count(0)
+    _apu_frame_count(0),
+    _draw_buffer(nullptr)
 {
-    //_ui.gridLayout->addWidget(_panel_widget);
-
-    //connect(_ui.actionOpen, SIGNAL(triggered()), this, SLOT(openFile()));
-    //connect(_ui.actionExit, SIGNAL(triggered()), this, SLOT(quit()));
-
     initSDL();
 }
 
@@ -35,8 +31,6 @@ TinerasNES::~TinerasNES()
 
 void TinerasNES::init()
 {
-    //_panel_widget = new PanelWidget(this);
-
     if (_cpu != nullptr)
         delete _cpu;
 
@@ -71,27 +65,39 @@ void TinerasNES::initSDL()
     SDL_Init(SDL_INIT_EVERYTHING);
 }
 
+void TinerasNES::idle()
+{
+    while (!_quit)
+    {
+        if (!_running)
+        {
+            QThread::sleep(1);
+        }
+        else if (_running)
+        {
+            run();
+        }
+    }
+}
+
+// TODO: See how 
 void TinerasNES::run()
 {
-    // Temporarily using Qt to draw
-    _panel_widget->setDrawBuffer(_ppu->framePreBuffer);
-    _panel_widget->setImage();
-    _panel_widget->setShouldDraw(true);
+    _draw_buffer = _ppu->framePreBuffer;
 
     _frame_timer.start();
 
     // Enable Audio
     _apu->play();
 
-    while (_running)
+    while(_running)
     {
+        if (_drawing_frame)
+            continue;
+
         // Run CPU - Execute Opcode
         int elapsed_cpu_cycles = _cpu->execOpCode();
         _current_cpu_cycle += elapsed_cpu_cycles * 15;
-        _master_cpu_cycle += elapsed_cpu_cycles;
-
-        if(_master_cpu_cycle > 1789772) // TODO: Check...How did I arrive at this number?
-            _master_cpu_cycle = 0;
 
         // Run APU
         _apu_frame_count += elapsed_cpu_cycles;
@@ -107,9 +113,11 @@ void TinerasNES::run()
         _ppu->run(_current_cpu_cycle);
 
         // Ready to render
-        while(_ppu->readyToRender())
+        if(_ppu->readyToRender())
         {
-            if (_frame_timer.elapsed() >= k_frame_time)
+            //while (_frame_timer.elapsed() < k_frame_time) {}
+
+            //if (_frame_timer.elapsed() >= k_frame_time)
             {
                 // TODO: HACK...FIX THIS (SETTING BG Color)
                 // Should be respecting BG transparency instead
@@ -117,18 +125,14 @@ void TinerasNES::run()
                 {
                     if (_ppu->framePreBuffer[i + 3] == 0)
                     {
-                        _ppu->framePreBuffer[i]     = _ppu->BGColorB;
+                        _ppu->framePreBuffer[i]     = _ppu->BGColorR;
                         _ppu->framePreBuffer[i + 1] = _ppu->BGColorG;
-                        _ppu->framePreBuffer[i + 2] = _ppu->BGColorR;
+                        _ppu->framePreBuffer[i + 2] = _ppu->BGColorB;
                         _ppu->framePreBuffer[i + 3] = 255;
                     }
                 }
 
-                // Force redraw
-                // TODO: Investigate repaint vs update
-                // NOTE: Temporarily use Qt Image for drawing while reworking emulator
-                // Ugly, I know... don't look too close.
-                _panel_widget->repaint();
+                _drawing_frame = true;
 
                 // Reset CPU Cycle
                 _current_cpu_cycle = 0;
@@ -215,15 +219,9 @@ void TinerasNES::onKeyReleaseEvent(int key)
     }
 }
 
-void TinerasNES::openFile()
+void TinerasNES::openFile(QString filename)
 {
     init();
-
-#if 0
-    QString filename = QFileDialog::getOpenFileName(dynamic_cast<QWidget*>(sender()), "Select NES Rom", "c:/emu/TestRoms", "NES file (*.nes);;Zipped NES file (*.zip)");
-#else
-    QString filename = QFileDialog::getOpenFileName(dynamic_cast<QWidget*>(sender()), "Select NES Rom", "E:/Emulators/TestRoms", "NES file (*.nes);;Zipped NES file (*.zip)");
-#endif
 
     if (filename.isEmpty())
         return;
@@ -342,20 +340,15 @@ void TinerasNES::openFile()
     // Set Program Counter for Normal Operation
     _cpu->setPC(_mem->getMemoryMappedCPUByte(0xFFFC) + (_mem->getMemoryMappedCPUByte(0xFFFD) << 8));
 
-    // TODO: Fix this mess
     // Set Joypad Values
     _mem->setMemCPU(0x4016, 0x40);
     _mem->setMemCPU(0x4017, 0x40);
 
-    // Turn on apu
-    // _apu->APU_play();
-
     _running = true;
-
-    QMetaObject::invokeMethod(this, "run", Qt::QueuedConnection);
 }
 
 void TinerasNES::quit()
 {
     _running = false;
+    _quit = true;
 }

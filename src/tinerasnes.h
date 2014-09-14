@@ -23,101 +23,48 @@ static const int k_nes_res_y = 240;
 static const int k_max_cpu_cycle = 29780 * 15; // Max CPU cycles per frame (29780)
 static const double k_frame_time = 1.0 / 60 * 1000; // Time for a single frame (in ms)
 
-class PanelWidget : public QWidget
-{
-public:
-    PanelWidget(QObject* parent) : _painter(new QPainter(this)), _should_draw(false), _draw_buffer(nullptr)
-    {
-    }
-    ~PanelWidget()
-    {
-    }
-
-    void setShouldDraw(bool should_draw) { _should_draw = should_draw; }
-    void setDrawBuffer(unsigned char* buffer) { _draw_buffer = buffer; }
-    void setImage()
-    {
-        //_img_bg = QImage(k_nes_res_x, k_nes_res_y, QImage::Format_RGB32);
-        _img = QImage(_draw_buffer, k_nes_res_x, k_nes_res_y, QImage::Format_RGB32);
-    }
-    void setBG(unsigned char red, unsigned char green, unsigned char blue)
-    {
-        //_img_bg.fill(QColor(red, green, blue, 255));
-    }
-
-protected:
-    void paintEvent(QPaintEvent* event)
-    {
-        QWidget::paintEvent(event);
-
-        if (_should_draw)
-        {
-            if (this->isVisible())
-            {
-                if (_draw_buffer == nullptr)
-                    return;
-
-                _painter->begin(this);
-                _img_scaled = _img.scaled(this->width(), this->height(), Qt::IgnoreAspectRatio);
-                _painter->drawImage(0, 0, _img);
-                _painter->end();
-            }
-        }
-    }
-    
-    void resizeEvent(QResizeEvent* event)
-    {
-        QWidget::resizeEvent(event);
-
-        if (_draw_buffer != nullptr)
-        {
-            _img_scaled = _img.scaled(this->width(), this->height(), Qt::IgnoreAspectRatio);
-        }
-    }
-
-private:
-    QPainter* _painter;
-    //QByteArray _draw_buffer;
-    //QImage _img_bg;
-    //QImage _img_bg_scaled;
-    QImage _img;
-    QImage _img_scaled;
-    bool _should_draw;
-    unsigned char* _draw_buffer;
-};
-
 class TinerasNES : public QObject
 {
     Q_OBJECT
 
 public:
-    TinerasNES(QWidget *parent = 0);
+    TinerasNES();
     ~TinerasNES();
 
     int currentCPUCycle() { return _current_cpu_cycle; }
     void bumpCurrentCPUCycle(int add_cycles) { _current_cpu_cycle += add_cycles; }
 
-protected:
-
-public slots:
-    void run();
-    void openFile();
+    virtual void run();
     void onKeyPressEvent(int key);
     void onKeyReleaseEvent(int key);
+
+    bool drawingFrame() { return _drawing_frame; }
+    void setDrawingFrame(bool drawing_frame) { _drawing_frame = drawing_frame; }
+
+    unsigned char* pixels() { return _draw_buffer; }
+
+    void init();
+    void openFile(QString filename);
+
+signals:
+    void repaintGLWidget();
+
+public slots:
+    void idle();
     void quit();
 
 private:
-    void init();
     void initSDL();
 
     bool _running;
-
-    PanelWidget* _panel_widget;
+    bool _quit;
+    bool _drawing_frame;
 
     unsigned int _master_cpu_cycle;
     unsigned int _current_cpu_cycle;
-
     int _apu_frame_count;
+
+    unsigned char* _draw_buffer;
 
     QElapsedTimer _frame_timer;
 
