@@ -3,9 +3,15 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
     _emu_thread(nullptr),
-    _tineras_nes(nullptr)
+    _tineras_nes(nullptr),
+    _GLWidget(nullptr),
+    _show_menu(true)
 {
     _ui.setupUi(this);
+
+    _ui.gridLayout->setContentsMargins(0, 0, 0, 0);
+    _ui.statusBar->setEnabled(false);
+    _ui.statusBar->setVisible(false);
 
     _emu_thread = new QThread;
     _tineras_nes = new TinerasNES();
@@ -65,6 +71,28 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     // Call base class key press event
     QWidget::keyPressEvent(event);
 
+    switch(event->key())
+    {
+    case Qt::Key_Enter:
+    case Qt::Key_Return:
+        if (event->modifiers() == Qt::AltModifier)
+        {
+            if (!this->isFullScreen())
+            {
+                _ui.menuBar->hide();
+                this->showFullScreen();
+            }
+            else
+            {
+                this->showNormal();
+            }
+        }
+        break;
+    default:
+        break;
+    }
+
+    // TODO: Fix this. It's not doing anything since I moved the 'new' back to the constructor
     if (_tineras_nes)
         _tineras_nes->onKeyPressEvent(event->key());
 }
@@ -76,6 +104,18 @@ void MainWindow::keyReleaseEvent(QKeyEvent* event)
 
     if (_tineras_nes)
         _tineras_nes->onKeyReleaseEvent(event->key());
+}
+
+void MainWindow::mousePressEvent(QMouseEvent* event)
+{
+    QWidget::mousePressEvent(event);
+
+    if (_show_menu)
+        _show_menu = false;
+    else
+        _show_menu = true;
+
+    _show_menu ? _ui.menuBar->show() : _ui.menuBar->hide();
 }
 
 void MainWindow::quit()

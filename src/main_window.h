@@ -22,6 +22,7 @@ public:
 
 protected:
     virtual void closeEvent(QCloseEvent* event);
+    virtual void mousePressEvent(QMouseEvent* event);
     virtual void keyPressEvent(QKeyEvent* event);
     virtual void keyReleaseEvent(QKeyEvent* event);
 
@@ -40,6 +41,8 @@ private:
     TinerasNES* _tineras_nes;
     GLWidget* _GLWidget;
     Ui::MenuBar _ui;
+
+    bool _show_menu;
 
     QTimer _timer;
 };
