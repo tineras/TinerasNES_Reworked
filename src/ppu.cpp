@@ -246,9 +246,9 @@ void PPU::renderBackground()
         int bgTileNumberTemp = (pixelXTemp / 8) + ((scanlineTemp / 8) * 32);
 
         // Draw R,G,B,A of Current Background Pixel        
-        drawBG(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][0], 2);
+        drawBG(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][2], 2);
         drawBG(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][1], 1);
-        drawBG(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][2], 0);
+        drawBG(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][0], 0);
         drawBG(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, BGAlpha, 3);
     }
     #pragma endregion
@@ -309,9 +309,9 @@ void PPU::renderSprites()
 
                     int intPixelColor = _mem->getPPU(SPPal + SPColor) & 0x3F;
 
-                    drawSP(x, y, palColors[intPixelColor][2], 0);
+                    drawSP(x, y, palColors[intPixelColor][0], 0);
                     drawSP(x, y, palColors[intPixelColor][1], 1);
-                    drawSP(x, y, palColors[intPixelColor][0], 2);
+                    drawSP(x, y, palColors[intPixelColor][2], 2);
                     drawSP(x, y, SPAlpha, 3);
                 }
             }
