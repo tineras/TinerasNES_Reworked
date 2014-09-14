@@ -88,6 +88,11 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
             }
         }
         break;
+    case Qt::Key_Escape:
+        if (this->isFullScreen())
+        {
+            this->showNormal();
+        }
     default:
         break;
     }
