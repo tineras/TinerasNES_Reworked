@@ -14,11 +14,8 @@ TinerasNES::TinerasNES() :
     _apu(nullptr),
     _nes_input(nullptr),
     _running(false),
-    _quit(false),
     _drawing_frame(false),
-    _master_cpu_cycle(0),
-    _current_cpu_cycle(0),
-    _apu_frame_count(0),
+    _quit(false),
     _draw_buffer(nullptr)
 {
     initSDL();
@@ -45,6 +42,21 @@ void TinerasNES::init()
 
     if (_nes_input != nullptr)
         delete _nes_input;
+
+    _cpu = nullptr;
+    _mem = nullptr;
+    _ppu = nullptr;
+    _apu = nullptr;
+    _nes_input = nullptr;
+
+    _running = false;
+    _quit = false;
+
+    _drawing_frame = false;
+    _master_cpu_cycle = 0;
+    _current_cpu_cycle = 0;
+    _apu_frame_count = 0;
+    _draw_buffer = nullptr;
 
     _cpu = new CPU();
     _mem = new MEM(this);
@@ -328,8 +340,11 @@ void TinerasNES::openFile(QString filename)
 
     _mem->readPRG(&rom_blob[index], h_num_PRG_banks * 0x4000);
     index += h_num_PRG_banks * 0x4000;
-    _mem->readCHR(&rom_blob[index], size_CHR);
-    index += size_CHR;
+    if (size_CHR > 0)
+    {
+        _mem->readCHR(&rom_blob[index], size_CHR);
+        index += size_CHR;
+    }
 
     int offset = (h_num_PRG_banks - 1) * 0x4000;
     _mem->initPRGMapperPtrs(offset);

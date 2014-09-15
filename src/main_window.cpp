@@ -37,6 +37,7 @@ MainWindow::~MainWindow()
 {
     delete _emu_thread;
     delete _tineras_nes;
+    delete _GLWidget;
 }
 
 unsigned char* MainWindow::pixels()
@@ -63,6 +64,8 @@ void MainWindow::openFile()
         _timer.setInterval(17);
         connect(&_timer, SIGNAL(timeout()), this, SLOT(repaintGLWidget()));
         _timer.start();
+
+        _ui.menuBar->hide();
     }
 }
 
@@ -98,7 +101,7 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     }
 
     // TODO: Fix this. It's not doing anything since I moved the 'new' back to the constructor
-    if (_tineras_nes)
+    if (_tineras_nes->running())
         _tineras_nes->onKeyPressEvent(event->key());
 }
 
@@ -106,8 +109,8 @@ void MainWindow::keyReleaseEvent(QKeyEvent* event)
 {
     // Call base class key press event
     QWidget::keyPressEvent(event);
-
-    if (_tineras_nes)
+    
+    if (_tineras_nes->running())
         _tineras_nes->onKeyReleaseEvent(event->key());
 }
 
@@ -140,5 +143,7 @@ void MainWindow::repaintGLWidget()
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
+    _tineras_nes->quit();
+
     QWidget::closeEvent(event);
 }

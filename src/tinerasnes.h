@@ -31,34 +31,36 @@ public:
     TinerasNES();
     ~TinerasNES();
 
-    int currentCPUCycle() { return _current_cpu_cycle; }
-    void bumpCurrentCPUCycle(int add_cycles) { _current_cpu_cycle += add_cycles; }
-
-    virtual void run();
+    void run();
     void onKeyPressEvent(int key);
     void onKeyReleaseEvent(int key);
+    void openFile(QString filename);
+
+    bool running() { return _running; }
+
+    int currentCPUCycle() { return _current_cpu_cycle; }
+    void bumpCurrentCPUCycle(int add_cycles) { _current_cpu_cycle += add_cycles; }
 
     bool drawingFrame() { return _drawing_frame; }
     void setDrawingFrame(bool drawing_frame) { _drawing_frame = drawing_frame; }
 
     unsigned char* pixels() { return _draw_buffer; }
 
-    void init();
-    void openFile(QString filename);
+    void quit();
 
 signals:
     void repaintGLWidget();
 
 public slots:
     void idle();
-    void quit();
 
 private:
+    void init();
     void initSDL();
 
     bool _running;
-    bool _quit;
     bool _drawing_frame;
+    bool _quit;
 
     unsigned int _master_cpu_cycle;
     unsigned int _current_cpu_cycle;

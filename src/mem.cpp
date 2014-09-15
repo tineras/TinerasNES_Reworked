@@ -96,7 +96,6 @@ void MEM::setMapperNumber(char num)
 //    Create CHR and PRG Memory
 void MEM::initCHRPRG(int size_CHR, int size_PRG)
 {
-    _memCHR.resize(size_CHR);
     _memPRG.resize(size_PRG);
 
     // Initialize PRG Mapper Pointers
@@ -110,6 +109,8 @@ void MEM::initCHRPRG(int size_CHR, int size_PRG)
 
     if(size_CHR != 0)
     {
+        _memCHR.resize(size_CHR);
+
         // Initialize CHR Mapper Pointers
         for(int i = 0; i < 2; i++)
         {
@@ -137,13 +138,15 @@ void MEM::initCHRPRG(int size_CHR, int size_PRG)
 // Read CHR data from ROM into cart memory
 void MEM::readCHR(char* mem_CHR, int length)
 {
-    _memCHR.assign(mem_CHR, mem_CHR + length);
+    if (length > 0)
+        memcpy(&_memCHR.at(0), mem_CHR, length);
 }
 
 // Read PRG data from ROM into cart memory
 void MEM::readPRG(char* mem_PRG, int length)
 {
-    _memPRG.assign(mem_PRG, mem_PRG + length);
+    if (length > 0)
+        memcpy(&_memPRG.at(0), mem_PRG, length);
 }
 
 // TODO: Fix this mess
