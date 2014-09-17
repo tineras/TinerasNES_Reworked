@@ -37,7 +37,6 @@ public:
     void openFile(QString filename);
 
     bool running() { return _running; }
-
     int currentCPUCycle() { return _current_cpu_cycle; }
     void bumpCurrentCPUCycle(int add_cycles) { _current_cpu_cycle += add_cycles; }
 
@@ -45,6 +44,8 @@ public:
     void setDrawingFrame(bool drawing_frame) { _drawing_frame = drawing_frame; }
 
     unsigned char* pixels() { return _draw_buffer; }
+
+    MEM* mem() { return _mem; }
 
     void quit();
 

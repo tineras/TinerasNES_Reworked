@@ -7,6 +7,7 @@
 #include "ui_main_window.h"
 #include "tinerasnes.h"
 #include "glwidget.h"
+#include "ram_viewer.h"
 
 class GLWidget;
 
@@ -35,12 +36,20 @@ private slots:
     void openFile();
     void quit();
     void repaintGLWidget();
+    void showRamViewer();
+
+    // DEBUG
+    void test1();
+    void test2();
 
 private:
+    void readFile(QString filename);
+
     QThread* _emu_thread;
     TinerasNES* _tineras_nes;
     GLWidget* _GLWidget;
-    Ui::MenuBar _ui;
+    Ui::MainWindow _ui;
+    RamViewer* _ram_viewer;
 
     bool _show_menu;
 

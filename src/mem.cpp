@@ -13,7 +13,7 @@
     Mirrors                 (2008-3FFF) [ 8184] // Mirrors 2000-2007 every eight bytes from 2008 to 3FFF
     I/O Registers           (2000-2007) [    8] // PPU I/O control and misc.
     Mirrors                 (0800-1FFF) [ 6144] // Mirrors 0000-07FF 3 Times Starting at 0800, 1000 and 1800
-    RAM                     (0200-07FF) [ 1536]
+    RAM                     (0200-07FF) [ 1536] // RAM (internal)
     Stack                   (0100-01FF) [  256]
     Zero-Page               (0000-00FF) [  256]
 
@@ -41,7 +41,7 @@
 
        ----- Sprite Memory Map -----     
 
-    SPR-RAM (OAM)          (0000-00FF) [ 256] // Contains Sprite Attributes (64 sprites) x (4 bytes each) = 256 bytes
+    SPR-RAM (OAM)           (0000-00FF) [ 256] // Contains Sprite Attributes (64 sprites) x (4 bytes each) = 256 bytes
 
     */
 

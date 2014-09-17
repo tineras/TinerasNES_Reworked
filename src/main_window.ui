@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MenuBar</class>
- <widget class="QMainWindow" name="MenuBar">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -22,12 +22,12 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout"/>
   </widget>
-  <widget class="QStatusBar" name="statusBar">
+  <widget class="QStatusBar" name="status_bar">
    <property name="enabled">
     <bool>true</bool>
    </property>
   </widget>
-  <widget class="QMenuBar" name="menuBar">
+  <widget class="QMenuBar" name="menu_bar">
    <property name="geometry">
     <rect>
      <x>0</x>
@@ -36,24 +36,51 @@
      <height>21</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuFile">
+   <widget class="QMenu" name="menu_file">
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionOpen"/>
+    <addaction name="action_open"/>
     <addaction name="separator"/>
-    <addaction name="actionExit"/>
+    <addaction name="action_exit"/>
    </widget>
-   <addaction name="menuFile"/>
+   <widget class="QMenu" name="menu_test">
+    <property name="title">
+     <string>Test</string>
+    </property>
+    <addaction name="action_ram_viewer"/>
+    <addaction name="action_test_1"/>
+    <addaction name="action_test_2"/>
+   </widget>
+   <addaction name="menu_file"/>
+   <addaction name="menu_test"/>
   </widget>
-  <action name="actionOpen">
+  <action name="action_open">
    <property name="text">
     <string>Open...</string>
    </property>
   </action>
-  <action name="actionExit">
+  <action name="action_exit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="action_test_1">
+   <property name="text">
+    <string>actionTest1</string>
+   </property>
+  </action>
+  <action name="action_test_2">
+   <property name="text">
+    <string>actionTest2</string>
+   </property>
+  </action>
+  <action name="action_ram_viewer">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Ram Viewer</string>
    </property>
   </action>
  </widget>

@@ -24,6 +24,8 @@ public:
     void readPRG(char* mem_PRG, int length);
     void initPRGMapperPtrs(int offset);
 
+    unsigned char* mem() { return _memCPU; }
+
     unsigned char getMEM(int address);
     void setMEM(int address, unsigned char data);
 

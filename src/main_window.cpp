@@ -5,13 +5,14 @@ MainWindow::MainWindow(QWidget *parent)
     _emu_thread(nullptr),
     _tineras_nes(nullptr),
     _GLWidget(nullptr),
+    _ram_viewer(nullptr),
     _show_menu(true)
 {
     _ui.setupUi(this);
 
     _ui.gridLayout->setContentsMargins(0, 0, 0, 0);
-    _ui.statusBar->setEnabled(false);
-    _ui.statusBar->setVisible(false);
+    _ui.status_bar->setEnabled(false);
+    _ui.status_bar->setVisible(false);
 
     _emu_thread = new QThread;
     _tineras_nes = new TinerasNES();
@@ -27,8 +28,13 @@ MainWindow::MainWindow(QWidget *parent)
     _GLWidget = new GLWidget(this);
     _ui.gridLayout->addWidget(_GLWidget, 0, 0, 1, 1);
 
-    connect(_ui.actionOpen, SIGNAL(triggered()), this, SLOT(openFile()));
-    connect(_ui.actionExit, SIGNAL(triggered()), this, SLOT(quit()));
+    connect(_ui.action_open, SIGNAL(triggered()), this, SLOT(openFile()));
+    connect(_ui.action_exit, SIGNAL(triggered()), this, SLOT(quit()));
+
+    // DEBUG
+    connect(_ui.action_ram_viewer, SIGNAL(triggered()), this, SLOT(showRamViewer()));
+    connect(_ui.action_test_1, SIGNAL(triggered()), this, SLOT(test1()));
+    connect(_ui.action_test_2, SIGNAL(triggered()), this, SLOT(test2()));
 
     this->show();
 }
@@ -38,6 +44,7 @@ MainWindow::~MainWindow()
     delete _emu_thread;
     delete _tineras_nes;
     delete _GLWidget;
+    delete _ram_viewer;
 }
 
 unsigned char* MainWindow::pixels()
@@ -53,6 +60,13 @@ void MainWindow::openFile()
     QString filename = QFileDialog::getOpenFileName(this, "Select NES Rom", "E:/Emulators/TestRoms", "NES file (*.nes);;Zipped NES file (*.zip)");
 #endif
 
+    // TODO: Add archive support
+
+    readFile(filename);
+}
+
+void MainWindow::readFile(QString filename)
+{
     if (!filename.isEmpty())
     {
         // TODO: Reset state on each file open. This is currently broken.
@@ -65,8 +79,27 @@ void MainWindow::openFile()
         connect(&_timer, SIGNAL(timeout()), this, SLOT(repaintGLWidget()));
         _timer.start();
 
-        _ui.menuBar->hide();
+        _ui.menu_bar->hide();
+        _show_menu = false;
     }
+}
+
+void MainWindow::showRamViewer()
+{
+    if (!_ram_viewer)
+        _ram_viewer = new RamViewer(_tineras_nes);
+
+    _ram_viewer->show();
+}
+
+void MainWindow::test1()
+{
+    readFile("E:/Emulators/TestRoms/balloonfight.nes");
+}
+
+void MainWindow::test2()
+{
+    readFile("E:/Emulators/TestRoms/Scrolling Games/Super Mario Bros (PC10) - NTSC.nes");
 }
 
 void MainWindow::keyPressEvent(QKeyEvent* event)
@@ -82,7 +115,7 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
         {
             if (!this->isFullScreen())
             {
-                _ui.menuBar->hide();
+                _ui.menu_bar->hide();
                 this->showFullScreen();
             }
             else
@@ -123,7 +156,7 @@ void MainWindow::mousePressEvent(QMouseEvent* event)
     else
         _show_menu = true;
 
-    _show_menu ? _ui.menuBar->show() : _ui.menuBar->hide();
+    _show_menu ? _ui.menu_bar->show() : _ui.menu_bar->hide();
 }
 
 void MainWindow::quit()
