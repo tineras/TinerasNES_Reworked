@@ -93,12 +93,20 @@ void MainWindow::showRamViewer()
 
 void MainWindow::test1()
 {
+#if 0
     readFile("E:/Emulators/TestRoms/balloonfight.nes");
+#else
+    readFile("C:/Emu/TestRoms/balloonfight.nes");
+#endif
 }
 
 void MainWindow::test2()
 {
+#if 0
     readFile("E:/Emulators/TestRoms/Scrolling Games/Super Mario Bros (PC10) - NTSC.nes");
+#else
+    readFile("C:/Emu/TestRoms/Scrolling Games/Super Mario Bros (PC10) - NTSC.nes");
+#endif
 }
 
 void MainWindow::keyPressEvent(QKeyEvent* event)

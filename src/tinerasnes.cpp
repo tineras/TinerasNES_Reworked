@@ -153,6 +153,8 @@ void TinerasNES::run()
                 _current_cpu_cycle = 0;
                 _ppu->setReadyToRender(false);
             }
+
+            _nes_input->handleSDLJoystickEvents();
         }
     }
 }
