@@ -151,6 +151,8 @@ void TinerasNES::run()
                 _ppu->setReadyToRender(false);
                 _frame_timer.restart();
             }
+
+            _nes_input->handleSDLJoystickEvents();
         }
     }
 }
