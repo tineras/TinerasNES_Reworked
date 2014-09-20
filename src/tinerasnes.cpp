@@ -127,7 +127,8 @@ void TinerasNES::run()
         // Ready to render
         if(_ppu->readyToRender())
         {
-            //while (_frame_timer.elapsed() < k_frame_time) {}
+            while (_frame_timer.elapsed() < k_frame_time) {}
+            _frame_timer.restart();
 
             //if (_frame_timer.elapsed() >= k_frame_time)
             {
@@ -144,12 +145,12 @@ void TinerasNES::run()
                     }
                 }
 
+                emit repaintGLWidget();
                 _drawing_frame = true;
 
                 // Reset CPU Cycle
                 _current_cpu_cycle = 0;
                 _ppu->setReadyToRender(false);
-                _frame_timer.restart();
             }
         }
     }

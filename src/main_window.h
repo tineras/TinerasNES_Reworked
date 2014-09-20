@@ -52,8 +52,6 @@ private:
     RamViewer* _ram_viewer;
 
     bool _show_menu;
-
-    QTimer _timer;
 };
 
 #endif

@@ -21,7 +21,7 @@ static const int k_nes_res_x = 256;
 static const int k_nes_res_y = 240;
 
 static const int k_max_cpu_cycle = 29780 * 15; // Max CPU cycles per frame (29780)
-static const double k_frame_time = 1.0 / 60 * 1000; // Time for a single frame (in ms)
+static const double k_frame_time = 1.0 / 65 * 1000; // Time for a single frame (in ms)
 
 class TinerasNES : public QObject
 {

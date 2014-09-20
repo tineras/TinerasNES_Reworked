@@ -75,9 +75,7 @@ void MainWindow::readFile(QString filename)
 
         emit idle();
 
-        _timer.setInterval(17);
-        connect(&_timer, SIGNAL(timeout()), this, SLOT(repaintGLWidget()));
-        _timer.start();
+        connect(_tineras_nes, SIGNAL(repaintGLWidget()), this, SLOT(repaintGLWidget()));
 
         _ui.menu_bar->hide();
         _show_menu = false;
