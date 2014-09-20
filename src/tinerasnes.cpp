@@ -95,7 +95,7 @@ void TinerasNES::idle()
 // TODO: See how 
 void TinerasNES::run()
 {
-    _draw_buffer = _ppu->framePreBuffer;
+    _draw_buffer = _ppu->frameBuffer;
 
     _frame_timer.start();
 
@@ -136,12 +136,12 @@ void TinerasNES::run()
                 // Should be respecting BG transparency instead
                 for (int i = 0; i < (256 * 240 * 4); i+=4)
                 {
-                    if (_ppu->framePreBuffer[i + 3] == 0)
+                    if (_ppu->frameBuffer[i + 3] == 0)
                     {
-                        _ppu->framePreBuffer[i]     = _ppu->BGColorR;
-                        _ppu->framePreBuffer[i + 1] = _ppu->BGColorG;
-                        _ppu->framePreBuffer[i + 2] = _ppu->BGColorB;
-                        _ppu->framePreBuffer[i + 3] = 255;
+                        _ppu->frameBuffer[i]     = _ppu->BGColorR;
+                        _ppu->frameBuffer[i + 1] = _ppu->BGColorG;
+                        _ppu->frameBuffer[i + 2] = _ppu->BGColorB;
+                        _ppu->frameBuffer[i + 3] = 255;
                     }
                 }
 

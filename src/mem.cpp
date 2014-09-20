@@ -801,15 +801,15 @@ void MEM::setPPUByte(int address, unsigned char data)
 
         // Check to see if BG Clipping is turned on (0) / off (1)
         if ((data & 0x02) == 0x02)
-        { _ppu->bolClipBG = false; }
+        { _ppu->setClipBackground(false); }
         else
-        { _ppu->bolClipBG = true; }
+        { _ppu->setClipBackground(true); }
 
         // Check to see if Sprite Clipping is turned on (0) / off (1)
         if ((data & 0x04) == 0x04)
-        { _ppu->bolClipSP = false; }
+        { _ppu->setClipSprites(false); }
         else
-        { _ppu->bolClipSP = true; }
+        { _ppu->setClipSprites(true); }
         #pragma endregion
 
         _memCPU[address] = data;

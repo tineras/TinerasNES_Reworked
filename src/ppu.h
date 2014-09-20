@@ -21,8 +21,8 @@ public:
     void init(CPU* cpu, MEM* mem);
 
     // Draw Background/Sprites to frame pre-buffer
-    void drawBG(int tile, int line, int pixel, unsigned char color, unsigned char rgbOffset);    // Render Background to frame pre-buffer
-    void drawSP(int x, int y, unsigned char color, unsigned char rgbOffset);    // Render Sprites to frame pre-buffer
+    void constructBackground(int tile, int line, int pixel, unsigned char color, unsigned char rgbOffset);    // Render Background to frame pre-buffer
+    void constructSprites(int x, int y, unsigned char color, unsigned char rgbOffset);    // Render Sprites to frame pre-buffer
 
     bool readyToRender() { return _ready_to_render; }
     void setReadyToRender(bool ready_to_render) { _ready_to_render = ready_to_render; }
@@ -47,15 +47,16 @@ public:
     unsigned char prevBGColorB; // B
     unsigned char prevBGColorA; // A
 
-    bool BGChanged;
-
     // Main draw buffer
-    unsigned char framePreBuffer[256 * 240 * 4];    // Final rendered frame to draw. Contains BG and Sprites.
+    unsigned char frameBuffer[256 * 240 * 4];    // Final rendered frame to draw. Contains BG and Sprites.
 
-    bool bolDrawBG;
-    bool bolDrawSP;
-    bool bolClipBG;
-    bool bolClipSP;
+    bool drawBackground() { return _draw_background; }
+    bool drawSprites() { return _draw_sprites; }
+    bool clipBackground() { return _clip_background; }
+    bool clipSprites() { return _clip_sprites; }
+
+    void setClipBackground(bool clip_background) { _clip_background = clip_background; }
+    void setClipSprites(bool clip_sprites) { _clip_sprites = clip_sprites; }
 
 private:
     // Render Background/Sprites
@@ -113,6 +114,13 @@ private:
     int BGTile;        // Current Background Tile Number
     int BGTileLine;    // Current Background Line Number withing Current BGTile
     int BGPixel;    // Current Background Pixel Number within Current BGTile
+
+    bool _background_changed;
+
+    bool _draw_background;
+    bool _draw_sprites;
+    bool _clip_background;
+    bool _clip_sprites;
 
     // Pointer to TinerasNES object (set in constructor)
     TinerasNES *_tn;

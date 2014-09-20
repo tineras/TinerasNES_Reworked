@@ -207,11 +207,11 @@ void PPU::renderBackground()
 
     // Check to see if BG is turned on/off
     if ((_mem->memCPU(0x2001) & 0x08) == 0x08)
-    { bolDrawBG = true; }
+    { _draw_background = true; }
     else
-    { bolDrawBG = false; }
+    { _draw_background = false; }
 
-    if (bolDrawBG)
+    if (_draw_background)
     {
         // Get the Palette number to use for the current pixel
         int pal = getPal();
@@ -246,10 +246,10 @@ void PPU::renderBackground()
         int bgTileNumberTemp = (pixelXTemp / 8) + ((scanlineTemp / 8) * 32);
 
         // Draw R,G,B,A of Current Background Pixel        
-        drawBG(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][2], 2);
-        drawBG(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][1], 1);
-        drawBG(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][0], 0);
-        drawBG(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, BGAlpha, 3);
+        constructBackground(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][2], 2);
+        constructBackground(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][1], 1);
+        constructBackground(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][0], 0);
+        constructBackground(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, BGAlpha, 3);
     }
     #pragma endregion
 }
@@ -264,11 +264,11 @@ void PPU::renderSprites()
 
     // Check to see if Sprites are turned on/off
     if ((_mem->memCPU(0x2001) & 0x10) == 0x10)
-    { bolDrawSP = true; }
+    { _draw_sprites = true; }
     else
-    { bolDrawSP = false; }
+    { _draw_sprites = false; }
 
-    if (bolDrawSP)
+    if (_draw_sprites)
     {
         pixelX = (pixelM % 256);
 
@@ -309,10 +309,10 @@ void PPU::renderSprites()
 
                     int intPixelColor = _mem->getPPU(SPPal + SPColor) & 0x3F;
 
-                    drawSP(x, y, palColors[intPixelColor][0], 0);
-                    drawSP(x, y, palColors[intPixelColor][1], 1);
-                    drawSP(x, y, palColors[intPixelColor][2], 2);
-                    drawSP(x, y, SPAlpha, 3);
+                    constructSprites(x, y, palColors[intPixelColor][0], 0);
+                    constructSprites(x, y, palColors[intPixelColor][1], 1);
+                    constructSprites(x, y, palColors[intPixelColor][2], 2);
+                    constructSprites(x, y, SPAlpha, 3);
                 }
             }
         }
@@ -604,10 +604,10 @@ void PPU::updateDrawLocation()
            BGColorB == prevBGColorB &&
            BGColorA == prevBGColorA)
         {
-            BGChanged = false;
+            _background_changed = false;
         }
         else
-            BGChanged = true;
+            _background_changed = true;
 
         prevBGColorR = BGColorR;
         prevBGColorG = BGColorG;
@@ -628,20 +628,20 @@ void PPU::updateDrawLocation()
 //    **********
 //    Draw Background
 #pragma region /* ----- Draw Background ----- */
-void PPU::drawBG(int tile, int line, int pixel, unsigned char color, unsigned char rgbOffset)
+void PPU::constructBackground(int tile, int line, int pixel, unsigned char color, unsigned char rgbOffset)
 {
-    framePreBuffer[(tile * 32 + line * 1024 + (pixel) * 4) + (int)(tile / 32) * 32 * 224 + rgbOffset] = color;
+    frameBuffer[(tile * 32 + line * 1024 + (pixel) * 4) + (int)(tile / 32) * 32 * 224 + rgbOffset] = color;
 }
 #pragma endregion
 
 //    **********
 //    Draw Sprites
 #pragma region /* ----- Draw Sprites ----- */
-void PPU::drawSP(int x, int y, unsigned char color, unsigned char rgbOffset)
+void PPU::constructSprites(int x, int y, unsigned char color, unsigned char rgbOffset)
 {
     if (y < 240)
     {
-        framePreBuffer[x * 4 + y * 1024 + rgbOffset] = color;
+        frameBuffer[x * 4 + y * 1024 + rgbOffset] = color;
     }
 }
 #pragma endregion
@@ -735,15 +735,15 @@ void PPU::reset()
     VBlankTime = 20 * 341 * 5; // 20 Scanlines, 340 Pixels Per Scanline, 5 PPU Timestamp Cycles
 
     // Clear Framebuffer
-    memset(framePreBuffer, 0, sizeof(framePreBuffer));
+    memset(frameBuffer, 0, sizeof(frameBuffer));
 
     // Set bolDrawBG and bolDrawSP to 'True' so that the BG and Srites are being drawn be default
-    bolDrawBG = true;
-    bolDrawSP = true;
+    _draw_background = true;
+    _draw_sprites = true;
 
     // Set BG and Sprite Clipping
-    bolClipBG = true;
-    bolClipSP = true;
+    _clip_background = true;
+    _clip_sprites = true;
 
     // Sprite Related Variables
     spritesFound = false;    // Have sprites been found on current scanline?
@@ -767,7 +767,7 @@ void PPU::reset()
     prevBGColorB = 0x00; // B
     prevBGColorA = 0xFF; // A
 
-    BGChanged = true;
+    _background_changed = true;
 
     // Set Background Alpha
     bgAlpha = true;    // To easily let sprites know if BG pixel is transparent '0x00' = false, '0xFF' = true
