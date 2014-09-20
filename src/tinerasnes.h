@@ -37,6 +37,7 @@ public:
     void openFile(QString filename);
 
     bool running() { return _running; }
+    void setRunning(bool running) { _running = running; }
     int currentCPUCycle() { return _current_cpu_cycle; }
     void bumpCurrentCPUCycle(int add_cycles) { _current_cpu_cycle += add_cycles; }
 

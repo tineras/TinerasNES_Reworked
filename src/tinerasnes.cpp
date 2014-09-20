@@ -50,13 +50,15 @@ void TinerasNES::init()
     _nes_input = nullptr;
 
     _running = false;
+    _drawing_frame = false;
     _quit = false;
 
-    _drawing_frame = false;
     _master_cpu_cycle = 0;
     _current_cpu_cycle = 0;
     _apu_frame_count = 0;
     _draw_buffer = nullptr;
+
+    _frame_timer.restart();
 
     _cpu = new CPU();
     _mem = new MEM(this);
@@ -83,7 +85,7 @@ void TinerasNES::idle()
     {
         if (!_running)
         {
-            QThread::sleep(1);
+            QThread::msleep(50);
         }
         else if (_running)
         {

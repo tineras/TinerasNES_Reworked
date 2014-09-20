@@ -69,7 +69,8 @@ void MainWindow::readFile(QString filename)
 {
     if (!filename.isEmpty())
     {
-        // TODO: Reset state on each file open. This is currently broken.
+        _tineras_nes->setRunning(false);
+        QThread::msleep(50);
 
         _tineras_nes->openFile(filename);
 
