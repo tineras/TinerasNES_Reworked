@@ -147,8 +147,8 @@ void TinerasNES::run()
                     }
                 }
 
-                emit repaintGLWidget();
                 _drawing_frame = true;
+                emit repaintGLWidget();
 
                 // Reset CPU Cycle
                 _current_cpu_cycle = 0;
