@@ -63,8 +63,7 @@ public:
     void updateLengthCounter();
 
     void renderFrame();
-    void play();
-    void pause();
+    void setEnabled(bool enable);
 
     // Reset APU Variables
     void reset();

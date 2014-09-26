@@ -94,7 +94,6 @@ void TinerasNES::idle()
     }
 }
 
-// TODO: See how 
 void TinerasNES::run()
 {
     _draw_buffer = _ppu->frameBuffer;
@@ -102,7 +101,7 @@ void TinerasNES::run()
     _frame_timer.start();
 
     // Enable Audio
-    _apu->play();
+    _apu->setEnabled(true);
 
     while(_running)
     {

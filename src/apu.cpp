@@ -352,17 +352,10 @@ void APU::init_audio()
 }
 
 //    **********
-//    APU Play
-void APU::play()
+//    APU Enable/Disable
+void APU::setEnabled(bool enable)
 {
-    SDL_PauseAudio(0);
-}
-
-//    **********
-//    APU Pause
-void APU::pause()
-{
-    SDL_PauseAudio(1);
+    SDL_PauseAudio(enable ? 0 : 1);
 }
 
 //    **********
