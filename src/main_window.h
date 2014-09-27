@@ -56,6 +56,8 @@ private:
     InputDialog* _input_dialog;
     RamViewer* _ram_viewer;
 
+    QTimer _input_timer;
+
     bool _show_menu;
 };
 

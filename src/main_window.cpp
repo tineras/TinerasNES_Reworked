@@ -41,6 +41,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(_ui.action_input, SIGNAL(triggered()), this, SLOT(showInputDialog()));
 
+    _input_timer.setInterval(5);
+    connect(&_input_timer, SIGNAL(timeout()), this, SLOT(handleSDLEvents()));
+    _input_timer.start();
+
     this->show();
 }
 
@@ -49,6 +53,8 @@ MainWindow::~MainWindow()
     delete _emu_thread;
     delete _tineras_nes;
     delete _GLWidget;
+    delete _input_handler;
+    delete _input_dialog;
     delete _ram_viewer;
 }
 
@@ -181,7 +187,10 @@ void MainWindow::quit()
 
 void MainWindow::handleSDLEvents()
 {
-    if (_tineras_nes->running())
+    if (!_input_dialog)
+        return;
+
+    if (_tineras_nes->running() && !_input_dialog->isVisible())
     {
         std::vector<unsigned char> button_down_events;
         std::vector<unsigned char> button_up_events;

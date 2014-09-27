@@ -51,7 +51,6 @@ public:
     void quit();
 
 signals:
-    void handleSDLEvents();
     void repaintGLWidget();
 
 public slots:

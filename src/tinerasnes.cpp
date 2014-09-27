@@ -131,7 +131,6 @@ void TinerasNES::run()
             while (_frame_timer.elapsed() < k_frame_time) {}
             _frame_timer.restart();
 
-            //if (_frame_timer.elapsed() >= k_frame_time)
             {
                 // TODO: HACK...FIX THIS (SETTING BG Color)
                 // Should be respecting BG transparency instead
@@ -147,15 +146,12 @@ void TinerasNES::run()
                 }
 
                 _drawing_frame = true;
-                emit handleSDLEvents();
                 emit repaintGLWidget();
 
                 // Reset CPU Cycle
                 _current_cpu_cycle = 0;
                 _ppu->setReadyToRender(false);
             }
-
-            //_nes_input->handleSDLJoystickEvents();
         }
     }
 }

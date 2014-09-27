@@ -25,13 +25,16 @@ private slots:
     void onButtonB();
     void onButtonA();
 
+    void onSetAllButtons();
+
 private:
     void captureButton(QPushButton* button, ButtonType button_type, QString label_text);
 
-    Ui::InputDialog _ui;
     ControllerWidget* _controller_widget_1;
     ControllerWidget* _controller_widget_2;
     InputHandler* _input_handler;
+
+    Ui::InputDialog _ui;
 };
 
 #endif

@@ -31,10 +31,15 @@ InputDialog::InputDialog(InputHandler* input_handler) :
     connect(_controller_widget_2->ui()->button_start, SIGNAL(clicked()), this, SLOT(onButtonStart()));
     connect(_controller_widget_2->ui()->button_b, SIGNAL(clicked()), this, SLOT(onButtonB()));
     connect(_controller_widget_2->ui()->button_a, SIGNAL(clicked()), this, SLOT(onButtonA()));
+
+    connect(_controller_widget_1->ui()->button_set_all_buttons, SIGNAL(clicked()), this, SLOT(onSetAllButtons()));
 }
 
 InputDialog::~InputDialog()
 {
+    delete _controller_widget_1;
+    delete _controller_widget_1;
+    delete _input_handler;
 }
 
 void InputDialog::captureButton(QPushButton* button, ButtonType button_type, QString label_text)
@@ -89,4 +94,19 @@ void InputDialog::onButtonB()
 void InputDialog::onButtonA()
 {
     captureButton((QPushButton*)QObject::sender(), A, "A");
+}
+
+void InputDialog::onSetAllButtons()
+{
+    auto sender = (QPushButton*)QObject::sender();
+    auto parent = static_cast<ControllerWidget*>(sender->parent());
+
+    captureButton(parent->ui()->button_up, Up, "Up");
+    captureButton(parent->ui()->button_down, Down, "Down");
+    captureButton(parent->ui()->button_left, Left, "Left");
+    captureButton(parent->ui()->button_right, Right, "Right");
+    captureButton(parent->ui()->button_select, Select, "Select");
+    captureButton(parent->ui()->button_start, Start, "Start");
+    captureButton(parent->ui()->button_b, B, "B");
+    captureButton(parent->ui()->button_a, A, "A");
 }
