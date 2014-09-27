@@ -32,8 +32,8 @@ public:
     ~TinerasNES();
 
     void run();
-    void onKeyPressEvent(int key);
-    void onKeyReleaseEvent(int key);
+    void onKeyPressEvent(unsigned char button);
+    void onKeyReleaseEvent(unsigned char button);
     void openFile(QString filename);
 
     bool running() { return _running; }
@@ -51,6 +51,7 @@ public:
     void quit();
 
 signals:
+    void handleSDLEvents();
     void repaintGLWidget();
 
 public slots:

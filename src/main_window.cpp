@@ -6,6 +6,7 @@ MainWindow::MainWindow(QWidget *parent)
     _tineras_nes(nullptr),
     _GLWidget(nullptr),
     _ram_viewer(nullptr),
+    _input_handler(new InputHandler),
     _input_dialog(nullptr),
     _show_menu(true)
 {
@@ -19,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     _tineras_nes = new TinerasNES();
 
     connect(this, SIGNAL(idle()), _tineras_nes, SLOT(idle()));
+    connect(_tineras_nes, SIGNAL(handleSDLEvents()), this, SLOT(handleSDLEvents()));
     connect(_tineras_nes, SIGNAL(repaintGLWidget()), this, SLOT(repaintGLWidget()));
 
     _tineras_nes->moveToThread(_emu_thread);
@@ -97,7 +99,7 @@ void MainWindow::showRamViewer()
 void MainWindow::showInputDialog()
 {
     if (!_input_dialog)
-        _input_dialog = new InputDialog();
+        _input_dialog = new InputDialog(_input_handler);
 
     _input_dialog->show();
 }
@@ -122,6 +124,8 @@ void MainWindow::test2()
 
 void MainWindow::keyPressEvent(QKeyEvent* event)
 {
+    // TODO: Remove qt keyboard input, use sdl for keyboard
+
     // Call base class key press event
     QWidget::keyPressEvent(event);
 
@@ -150,19 +154,12 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     default:
         break;
     }
-
-    // TODO: Fix this. It's not doing anything since I moved the 'new' back to the constructor
-    if (_tineras_nes->running())
-        _tineras_nes->onKeyPressEvent(event->key());
 }
 
 void MainWindow::keyReleaseEvent(QKeyEvent* event)
 {
     // Call base class key press event
-    QWidget::keyPressEvent(event);
-    
-    if (_tineras_nes->running())
-        _tineras_nes->onKeyReleaseEvent(event->key());
+    QWidget::keyReleaseEvent(event);
 }
 
 void MainWindow::mousePressEvent(QMouseEvent* event)
@@ -180,6 +177,28 @@ void MainWindow::mousePressEvent(QMouseEvent* event)
 void MainWindow::quit()
 {
     QApplication::quit();
+}
+
+void MainWindow::handleSDLEvents()
+{
+    if (_tineras_nes->running())
+    {
+        std::vector<unsigned char> button_down_events;
+        std::vector<unsigned char> button_up_events;
+
+        _input_handler->handleSDLJoystickEvents(button_down_events, button_up_events);
+
+        for (auto buttons_it = button_down_events.begin(); buttons_it != button_down_events.end(); ++buttons_it)
+        {
+            unsigned char button = *buttons_it;
+            _tineras_nes->onKeyPressEvent(button);
+        }
+        for (auto buttons_it = button_up_events.begin(); buttons_it != button_up_events.end(); ++buttons_it)
+        {
+            unsigned char button = *buttons_it;
+            _tineras_nes->onKeyReleaseEvent(button);
+        }
+    }
 }
 
 void MainWindow::repaintGLWidget()

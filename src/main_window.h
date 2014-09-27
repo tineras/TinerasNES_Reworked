@@ -36,6 +36,7 @@ signals:
 private slots:
     void openFile();
     void quit();
+    void handleSDLEvents();
     void repaintGLWidget();
     void showRamViewer();
     void showInputDialog();
@@ -51,6 +52,7 @@ private:
     TinerasNES* _tineras_nes;
     GLWidget* _GLWidget;
     Ui::MainWindow _ui;
+    InputHandler* _input_handler;
     InputDialog* _input_dialog;
     RamViewer* _ram_viewer;
 

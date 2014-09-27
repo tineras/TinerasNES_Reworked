@@ -147,6 +147,7 @@ void TinerasNES::run()
                 }
 
                 _drawing_frame = true;
+                emit handleSDLEvents();
                 emit repaintGLWidget();
 
                 // Reset CPU Cycle
@@ -154,85 +155,19 @@ void TinerasNES::run()
                 _ppu->setReadyToRender(false);
             }
 
-            _nes_input->handleSDLJoystickEvents();
+            //_nes_input->handleSDLJoystickEvents();
         }
     }
 }
 
-void TinerasNES::onKeyPressEvent(int key)
+void TinerasNES::onKeyPressEvent(unsigned char button)
 {
-    if (key == Qt::Key_W)
-    {
-        _nes_input->pressButton(0x10);
-    }
-    else if (key == Qt::Key_A)
-    {
-        _nes_input->pressButton(0x40);
-    }
-    else if (key == Qt::Key_S)
-    {
-        _nes_input->pressButton(0x20);
-    }
-    else if (key == Qt::Key_D)
-    {
-        _nes_input->pressButton(0x80);
-    }
-
-    else if (key == Qt::Key_F)
-    {
-        _nes_input->pressButton(0x04);
-    }
-    else if (key == Qt::Key_G)
-    {
-        _nes_input->pressButton(0x08);
-    }
-
-    else if (key == Qt::Key_H)
-    {
-        _nes_input->pressButton(0x02);
-    }
-    else if (key == Qt::Key_J)
-    {
-        _nes_input->pressButton(0x01);
-    }
+    _nes_input->pressButton(button);
 }
 
-void TinerasNES::onKeyReleaseEvent(int key)
+void TinerasNES::onKeyReleaseEvent(unsigned char button)
 {
-    if (key == Qt::Key_W)
-    {
-        _nes_input->releaseButton(0xEF);
-    }
-    else if (key == Qt::Key_A)
-    {
-        _nes_input->releaseButton(0xBF);
-    }
-    else if (key == Qt::Key_S)
-    {
-        _nes_input->releaseButton(0xDF);
-    }
-    else if (key == Qt::Key_D)
-    {
-        _nes_input->releaseButton(0x7F);
-    }
-
-    else if (key == Qt::Key_F)
-    {
-        _nes_input->releaseButton(0xFB);
-    }
-    else if (key == Qt::Key_G)
-    {
-        _nes_input->releaseButton(0xF7);
-    }
-
-    else if (key == Qt::Key_H)
-    {
-        _nes_input->releaseButton(0xFD);
-    }
-    else if (key == Qt::Key_J)
-    {
-        _nes_input->releaseButton(0xFE);
-    }
+    _nes_input->releaseButton(button);
 }
 
 void TinerasNES::openFile(QString filename)
