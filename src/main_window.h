@@ -8,6 +8,7 @@
 #include "tinerasnes.h"
 #include "glwidget.h"
 #include "ram_viewer.h"
+#include "input_dialog.h"
 
 class GLWidget;
 
@@ -37,6 +38,7 @@ private slots:
     void quit();
     void repaintGLWidget();
     void showRamViewer();
+    void showInputDialog();
 
     // DEBUG
     void test1();
@@ -49,6 +51,7 @@ private:
     TinerasNES* _tineras_nes;
     GLWidget* _GLWidget;
     Ui::MainWindow _ui;
+    InputDialog* _input_dialog;
     RamViewer* _ram_viewer;
 
     bool _show_menu;

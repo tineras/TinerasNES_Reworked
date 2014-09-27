@@ -6,6 +6,7 @@ MainWindow::MainWindow(QWidget *parent)
     _tineras_nes(nullptr),
     _GLWidget(nullptr),
     _ram_viewer(nullptr),
+    _input_dialog(nullptr),
     _show_menu(true)
 {
     _ui.setupUi(this);
@@ -35,6 +36,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(_ui.action_ram_viewer, SIGNAL(triggered()), this, SLOT(showRamViewer()));
     connect(_ui.action_test_1, SIGNAL(triggered()), this, SLOT(test1()));
     connect(_ui.action_test_2, SIGNAL(triggered()), this, SLOT(test2()));
+
+    connect(_ui.action_input, SIGNAL(triggered()), this, SLOT(showInputDialog()));
 
     this->show();
 }
@@ -89,6 +92,14 @@ void MainWindow::showRamViewer()
         _ram_viewer = new RamViewer(_tineras_nes);
 
     _ram_viewer->show();
+}
+
+void MainWindow::showInputDialog()
+{
+    if (!_input_dialog)
+        _input_dialog = new InputDialog();
+
+    _input_dialog->show();
 }
 
 void MainWindow::test1()

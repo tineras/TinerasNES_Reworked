@@ -51,6 +51,7 @@
     <addaction name="action_ram_viewer"/>
     <addaction name="action_test_1"/>
     <addaction name="action_test_2"/>
+    <addaction name="action_input"/>
    </widget>
    <addaction name="menu_file"/>
    <addaction name="menu_test"/>
@@ -81,6 +82,11 @@
    </property>
    <property name="text">
     <string>Ram Viewer</string>
+   </property>
+  </action>
+  <action name="action_input">
+   <property name="text">
+    <string>Input</string>
    </property>
   </action>
  </widget>
