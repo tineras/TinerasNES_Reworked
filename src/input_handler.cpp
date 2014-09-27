@@ -1,15 +1,17 @@
 #include "input_handler.h"
 
-InputHandler::InputHandler() :
-    _joystick(nullptr)
+InputHandler::InputHandler()
 {
     SDL_Init(SDL_INIT_JOYSTICK);
 
     SDL_JoystickEventState(SDL_ENABLE);
 
-    int num = SDL_NumJoysticks();
+    _num_joysticks = SDL_NumJoysticks();
 
-    _joystick = SDL_JoystickOpen(0);
+    for (int i = 0; i < _num_joysticks; i++)
+    {
+        _joysticks.push_back(SDL_JoystickOpen(i));
+    }
 
     // This must be set in order to detect joystick input
     SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
@@ -17,7 +19,20 @@ InputHandler::InputHandler() :
 
 InputHandler::~InputHandler()
 {
-    SDL_JoystickClose(_joystick);
+    for (auto joysticks_it = _joysticks.begin(); joysticks_it != _joysticks.end(); ++joysticks_it)
+        SDL_JoystickClose(*joysticks_it);
+}
+
+QStringList InputHandler::joystickNames()
+{
+    QStringList joystick_names;
+
+    for (int i = 0; i < _num_joysticks; i++)
+    {
+        joystick_names.push_back(SDL_JoystickName(_joysticks.at(i)));
+    }
+
+    return joystick_names;
 }
 
 void InputHandler::flushEvents()
@@ -136,7 +151,7 @@ QString InputHandler::captureButton(ButtonType button)
             break;
     }
 
-    return QString("joy_1_btn" + QString::number(_joystick_event.jbutton.button));
+    return QString("joy_" + QString::number(_joystick_event.jbutton.which) + "_btn" + QString::number(_joystick_event.jbutton.button));
 }
 
 void InputHandler::handleSDLJoystickEvents(std::vector<unsigned char>& button_down_events, std::vector<unsigned char>& button_up_events)

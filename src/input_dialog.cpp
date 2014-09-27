@@ -33,6 +33,13 @@ InputDialog::InputDialog(InputHandler* input_handler) :
     connect(_controller_widget_2->ui()->button_a, SIGNAL(clicked()), this, SLOT(onButtonA()));
 
     connect(_controller_widget_1->ui()->button_set_all_buttons, SIGNAL(clicked()), this, SLOT(onSetAllButtons()));
+
+    QStringList joystick_names = _input_handler->joystickNames();
+    for (auto joystick_names_it = joystick_names.begin(); joystick_names_it != joystick_names.end(); ++joystick_names_it)
+    {
+        _controller_widget_1->ui()->combo_box_input_device->addItem(*joystick_names_it);
+        _controller_widget_2->ui()->combo_box_input_device->addItem(*joystick_names_it);
+    }
 }
 
 InputDialog::~InputDialog()
