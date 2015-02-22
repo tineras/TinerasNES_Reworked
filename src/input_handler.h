@@ -27,6 +27,7 @@ public:
     QStringList InputHandler::joystickNames();
 
     void flushEvents();
+    void clearJoystickInputs();
     QString captureButton(ButtonType button);
     void handleSDLJoystickEvents(std::vector<unsigned char>& button_down_events, std::vector<unsigned char>& button_up_events);
 

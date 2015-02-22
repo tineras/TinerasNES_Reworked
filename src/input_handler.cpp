@@ -40,6 +40,12 @@ void InputHandler::flushEvents()
     while(SDL_PollEvent(&_joystick_event) != 0) {};
 }
 
+void InputHandler::clearJoystickInputs()
+{
+    _joy_map_down_1.clear();
+    _joy_map_up_1.clear();
+}
+
 QString InputHandler::captureButton(ButtonType button)
 {
     // Wait for joystick or keyboard input
@@ -57,35 +63,35 @@ QString InputHandler::captureButton(ButtonType button)
             {
                 if (button == Up)
                 {
-                    _joy_map_down_1.insert(std::make_pair(_joystick_event.jbutton.button, 0x10));
+                    _joy_map_down_1[_joystick_event.jbutton.button] = 0x10;
                 }
                 else if (button == Down)
                 {
-                    _joy_map_down_1.insert(std::make_pair(_joystick_event.jbutton.button, 0x20));
+                    _joy_map_down_1[_joystick_event.jbutton.button] = 0x20;
                 }
                 else if (button == Left)
                 {
-                    _joy_map_down_1.insert(std::make_pair(_joystick_event.jbutton.button, 0x40));
+                    _joy_map_down_1[_joystick_event.jbutton.button] = 0x40;
                 }
                 else if (button == Right)
                 {
-                    _joy_map_down_1.insert(std::make_pair(_joystick_event.jbutton.button, 0x80));
+                    _joy_map_down_1[_joystick_event.jbutton.button] = 0x80;
                 }
                 else if (button == Select)
                 {
-                    _joy_map_down_1.insert(std::make_pair(_joystick_event.jbutton.button, 0x04));
+                    _joy_map_down_1[_joystick_event.jbutton.button] = 0x04;
                 }
                 else if (button == Start)
                 {
-                    _joy_map_down_1.insert(std::make_pair(_joystick_event.jbutton.button, 0x08));
+                    _joy_map_down_1[_joystick_event.jbutton.button] = 0x08;
                 }
                 else if (button == B)
                 {
-                    _joy_map_down_1.insert(std::make_pair(_joystick_event.jbutton.button, 0x02));
+                    _joy_map_down_1[_joystick_event.jbutton.button] = 0x02;
                 }
                 else if (button == A)
                 {
-                    _joy_map_down_1.insert(std::make_pair(_joystick_event.jbutton.button, 0x01));
+                    _joy_map_down_1[_joystick_event.jbutton.button] = 0x01;
                 }
             }
             break;
@@ -93,35 +99,35 @@ QString InputHandler::captureButton(ButtonType button)
             {
                 if (button == Up)
                 {
-                    _joy_map_up_1.insert(std::make_pair(_joystick_event.jbutton.button, 0xEF));
+                    _joy_map_up_1[_joystick_event.jbutton.button] = 0xEF;
                 }
                 else if (button == Down)
                 {
-                    _joy_map_up_1.insert(std::make_pair(_joystick_event.jbutton.button, 0xDF));
+                    _joy_map_up_1[_joystick_event.jbutton.button] = 0xDF;
                 }
                 else if (button == Left)
                 {
-                    _joy_map_up_1.insert(std::make_pair(_joystick_event.jbutton.button, 0xBF));
+                    _joy_map_up_1[_joystick_event.jbutton.button] = 0xBF;
                 }
                 else if (button == Right)
                 {
-                    _joy_map_up_1.insert(std::make_pair(_joystick_event.jbutton.button, 0x7F));
+                    _joy_map_up_1[_joystick_event.jbutton.button] = 0x7F;
                 }
                 else if (button == Select)
                 {
-                    _joy_map_up_1.insert(std::make_pair(_joystick_event.jbutton.button, 0xFB));
+                    _joy_map_up_1[_joystick_event.jbutton.button] = 0xFB;
                 }
                 else if (button == Start)
                 {
-                    _joy_map_up_1.insert(std::make_pair(_joystick_event.jbutton.button, 0xF7));
+                    _joy_map_up_1[_joystick_event.jbutton.button] = 0xF7;
                 }
                 else if (button == B)
                 {
-                    _joy_map_up_1.insert(std::make_pair(_joystick_event.jbutton.button, 0xFD));
+                    _joy_map_up_1[_joystick_event.jbutton.button] = 0xFD;
                 }
                 else if (button == A)
                 {
-                    _joy_map_up_1.insert(std::make_pair(_joystick_event.jbutton.button, 0xFE));
+                    _joy_map_up_1[_joystick_event.jbutton.button] = 0xFE;
                 }
 
                 found = true;

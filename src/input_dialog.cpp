@@ -45,7 +45,7 @@ InputDialog::InputDialog(InputHandler* input_handler) :
 InputDialog::~InputDialog()
 {
     delete _controller_widget_1;
-    delete _controller_widget_1;
+    delete _controller_widget_2;
     delete _input_handler;
 }
 
@@ -107,6 +107,9 @@ void InputDialog::onSetAllButtons()
 {
     auto sender = (QPushButton*)QObject::sender();
     auto parent = static_cast<ControllerWidget*>(sender->parent());
+
+    // Not sure if this is necessary since inputs are overwritten
+    //_input_handler->clearJoystickInputs();
 
     captureButton(parent->ui()->button_up, Up, "Up");
     captureButton(parent->ui()->button_down, Down, "Down");
