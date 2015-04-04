@@ -130,10 +130,11 @@ void MainWindow::test2()
 
 void MainWindow::keyPressEvent(QKeyEvent* event)
 {
-    // TODO: Remove qt keyboard input, use sdl for keyboard
-
     // Call base class key press event
     QWidget::keyPressEvent(event);
+
+    if (event->isAutoRepeat())
+        return;
 
     switch(event->key())
     {
@@ -157,7 +158,9 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
         {
             this->showNormal();
         }
+        break;
     default:
+        _input_handler->addKeyboardEvent(SDL_KEYDOWN, event->key());
         break;
     }
 }
@@ -166,6 +169,8 @@ void MainWindow::keyReleaseEvent(QKeyEvent* event)
 {
     // Call base class key press event
     QWidget::keyReleaseEvent(event);
+
+    _input_handler->addKeyboardEvent(SDL_KEYUP, event->key());
 }
 
 void MainWindow::mousePressEvent(QMouseEvent* event)

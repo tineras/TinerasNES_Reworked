@@ -57,7 +57,7 @@ void InputDialog::captureButton(QPushButton* button, ButtonType button_type, QSt
     controller_widget->ui()->frame_set_input->setVisible(true);
 
     _input_handler->flushEvents();
-    QString button_text = _input_handler->captureButton(button_type);
+    QString button_text = _input_handler->captureButton(this, button_type);
     button->setText(button_text);
 
     controller_widget->ui()->frame_set_input->setVisible(false);
@@ -119,4 +119,29 @@ void InputDialog::onSetAllButtons()
     captureButton(parent->ui()->button_start, Start, "Start");
     captureButton(parent->ui()->button_b, B, "B");
     captureButton(parent->ui()->button_a, A, "A");
+}
+
+void InputDialog::keyPressEvent(QKeyEvent* event)
+{
+
+    // Call base class key press event
+    QWidget::keyPressEvent(event);
+
+    if (event->isAutoRepeat())
+        return;
+
+    _input_handler->addKeyboardEvent(SDL_KEYDOWN, event->key());
+}
+
+void InputDialog::keyReleaseEvent(QKeyEvent* event)
+{
+    // Call base class key release event
+    QWidget::keyReleaseEvent(event);
+
+    _input_handler->addKeyboardEvent(SDL_KEYUP, event->key());
+}
+
+void InputDialog::forceProcessEvents()
+{
+    QCoreApplication::processEvents();
 }

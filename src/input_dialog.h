@@ -15,6 +15,12 @@ public:
     InputDialog(InputHandler* input_handler);
     ~InputDialog();
 
+    void forceProcessEvents();
+
+protected:
+    virtual void keyPressEvent(QKeyEvent* event);
+    virtual void keyReleaseEvent(QKeyEvent* event);
+
 private slots:
     void onButtonUp();
     void onButtonDown();
