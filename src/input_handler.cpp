@@ -270,7 +270,7 @@ QString InputHandler::captureButton(InputDialog* dialog, ButtonType button)
     return ret;
 }
 
-void InputHandler::handleSDLJoystickEvents(std::vector<unsigned char>& button_down_events, std::vector<unsigned char>& button_up_events)
+void InputHandler::handleSDLInputEvents(std::vector<unsigned char>& button_down_events, std::vector<unsigned char>& button_up_events)
 {
     SDL_Event input_events;
 

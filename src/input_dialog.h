@@ -33,6 +33,8 @@ private slots:
 
     void onSetAllButtons();
 
+    void onAccepted();
+
 private:
     void captureButton(QPushButton* button, ButtonType button_type, QString label_text);
 

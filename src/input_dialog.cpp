@@ -34,6 +34,8 @@ InputDialog::InputDialog(InputHandler* input_handler) :
 
     connect(_controller_widget_1->ui()->button_set_all_buttons, SIGNAL(clicked()), this, SLOT(onSetAllButtons()));
 
+    connect(this, SIGNAL(accepted()), this, SLOT(onAccepted()));
+
     QStringList joystick_names = _input_handler->joystickNames();
     for (auto joystick_names_it = joystick_names.begin(); joystick_names_it != joystick_names.end(); ++joystick_names_it)
     {
@@ -144,4 +146,9 @@ void InputDialog::keyReleaseEvent(QKeyEvent* event)
 void InputDialog::forceProcessEvents()
 {
     QCoreApplication::processEvents();
+}
+
+void InputDialog::onAccepted()
+{
+    // Save inputs
 }

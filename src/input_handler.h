@@ -25,10 +25,8 @@ enum ButtonType
     A
 };
 
-class InputHandler : public QDialog
+class InputHandler
 {
-    Q_OBJECT
-
 public:
     InputHandler();
     ~InputHandler();
@@ -39,7 +37,7 @@ public:
     void flushEvents();
     void clearJoystickInputs();
     QString captureButton(InputDialog* dialog, ButtonType button);
-    void handleSDLJoystickEvents(std::vector<unsigned char>& button_down_events, std::vector<unsigned char>& button_up_events);
+    void handleSDLInputEvents(std::vector<unsigned char>& button_down_events, std::vector<unsigned char>& button_up_events);
     SDL_Keycode InputHandler::SDLKeyFromQtKey(int key);
 
 private:

@@ -200,7 +200,7 @@ void MainWindow::handleSDLEvents()
         std::vector<unsigned char> button_down_events;
         std::vector<unsigned char> button_up_events;
 
-        _input_handler->handleSDLJoystickEvents(button_down_events, button_up_events);
+        _input_handler->handleSDLInputEvents(button_down_events, button_up_events);
 
         for (auto buttons_it = button_down_events.begin(); buttons_it != button_down_events.end(); ++buttons_it)
         {
