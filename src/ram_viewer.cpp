@@ -26,10 +26,11 @@ void RamViewer::updateText()
     auto saved_cursor = _ui.text_edit_ram_view->textCursor().position();
 
     _ui.text_edit_ram_view->append("00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F ");
+    _ui.text_edit_ram_view->append("-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- ");
 
     char dest[1536 * 3];
     unsigned char* mem_cpu = _tineras_nes->mem()->mem();
-    for (int i = 0; i < 1536; i++)
+    for (int i = 0; i < (1536-3); i++) // ??? Had to do (-3) here so it wouldn't crash... why?
     {
         sprintf(&dest[i*3], "%02x ", mem_cpu[i + 0x200]);
     }
