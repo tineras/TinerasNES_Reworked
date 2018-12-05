@@ -7,7 +7,7 @@ MainWindow::MainWindow(QWidget *parent)
     _GLWidget(nullptr),
     _ram_viewer(nullptr),
     _input_handler(new InputHandler),
-    _input_dialog(nullptr),
+    _input_dialog(new InputDialog(_input_handler)),
     _show_menu(true)
 {
     _ui.setupUi(this);
@@ -112,7 +112,7 @@ void MainWindow::showInputDialog()
 
 void MainWindow::test1()
 {
-#if 0
+#if 1
     readFile("E:/Emulators/TestRoms/balloonfight.nes");
 #else
     readFile("C:/Emu/TestRoms/balloonfight.nes");
@@ -121,7 +121,7 @@ void MainWindow::test1()
 
 void MainWindow::test2()
 {
-#if 0
+#if 1
     readFile("E:/Emulators/TestRoms/Scrolling Games/Super Mario Bros (PC10) - NTSC.nes");
 #else
     readFile("C:/Emu/TestRoms/Scrolling Games/Super Mario Bros (PC10) - NTSC.nes");

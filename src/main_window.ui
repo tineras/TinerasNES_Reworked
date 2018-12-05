@@ -70,10 +70,16 @@
    <property name="text">
     <string>actionTest1</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+1</string>
+   </property>
   </action>
   <action name="action_test_2">
    <property name="text">
     <string>actionTest2</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+2</string>
    </property>
   </action>
   <action name="action_ram_viewer">

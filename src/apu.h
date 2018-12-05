@@ -134,5 +134,7 @@ private:
     APU_triangle* _triangle;
 
     CPU* _cpu;
+
+    int _playback_device_id = NULL;
 };
 #endif //_APU_HEADER

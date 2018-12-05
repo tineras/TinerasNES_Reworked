@@ -41,6 +41,8 @@ public:
     SDL_Keycode InputHandler::SDLKeyFromQtKey(int key);
 
 private:
+    void assignDefaults();
+
     int _num_joysticks;
     std::vector<SDL_Joystick*> _joysticks;
 

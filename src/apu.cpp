@@ -120,6 +120,8 @@ APU::~APU()
     // Close APU Debugging File Stream
     //apuDebugFileStream.close();
 
+    setEnabled(false);
+
     // Closes Audio Device
     SDL_CloseAudio();
 }
@@ -356,20 +358,22 @@ void APU::init_audio()
 
         if (default_audio_device_name.compare(SDL_GetAudioDeviceName(i, 0)) == 0)
         {
+            printf("    Found default id (%d)\n", i, SDL_GetAudioDeviceName(i, 0));
+
             default_id = i;
             break;
         }
     }
 
-    // Passing 'NULL' for the device name will get the default device (https://wiki.libsdl.org/SDL_OpenAudioDevice)
-    int playback_device_id = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(default_id, 0), 0, &_audio_spec_desired, &_audio_spec_obtained, 0);
+    _playback_device_id = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(default_id, 0), 0, &_audio_spec_desired, &_audio_spec_obtained, 0);
+    printf("Selected audio device: %s\n", SDL_GetAudioDeviceName(_playback_device_id, 0));
 
     if (_audio_spec_desired.format != _audio_spec_obtained.format)
     {
         printf("Obtained audio format does not match the desired audio format\n");
     }
 
-    if (playback_device_id < 0)
+    if (_playback_device_id < 0)
     {
         printf("Failed to initialize SDL Audio. Error: %s\n", SDL_GetError());
 
@@ -377,9 +381,9 @@ void APU::init_audio()
     }
     else
     {
-        printf("Successfully opened audio device: %s\n", SDL_GetAudioDeviceName(playback_device_id, 0));
+        printf("Successfully opened audio device: %s\n", SDL_GetAudioDeviceName(_playback_device_id, 0));
 
-        SDL_PauseAudioDevice(playback_device_id, 0);
+        SDL_PauseAudioDevice(_playback_device_id, 0);
     }
 }
 
@@ -388,6 +392,7 @@ void APU::init_audio()
 void APU::setEnabled(bool enable)
 {
     SDL_PauseAudio(enable ? 0 : 1);
+    SDL_PauseAudioDevice(_playback_device_id, enable ? 0 : 1);
 }
 
 //    **********

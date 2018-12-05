@@ -59,6 +59,7 @@ public slots:
 private:
     void init();
     void initSDL();
+    void resetAll();
 
     bool _running;
     bool _drawing_frame;

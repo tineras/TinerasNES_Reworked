@@ -16,12 +16,48 @@ InputHandler::InputHandler()
 
     // This must be set in order to detect joystick input
     SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+
+    assignDefaults();
 }
 
 InputHandler::~InputHandler()
 {
     for (auto joysticks_it = _joysticks.begin(); joysticks_it != _joysticks.end(); ++joysticks_it)
         SDL_JoystickClose(*joysticks_it);
+}
+
+void InputHandler::assignDefaults()
+{
+    auto register_key = [](SDL_EventType type, std::map<SDL_Keycode, unsigned char>& keyboard_map, SDL_Keycode key_code, unsigned char key_value)
+    {
+        keyboard_map[key_code] = key_value;
+
+        SDL_Event key_event;
+        key_event.type = type;
+        key_event.key.keysym.sym = key_value;
+
+        SDL_PushEvent(&key_event);
+    };
+
+    // Key down
+    register_key(SDL_KEYDOWN, _keyboard_map_down, SDLK_w, 0x10);
+    register_key(SDL_KEYDOWN, _keyboard_map_down, SDLK_s, 0x20);
+    register_key(SDL_KEYDOWN, _keyboard_map_down, SDLK_a, 0x40);
+    register_key(SDL_KEYDOWN, _keyboard_map_down, SDLK_d, 0x80);
+    register_key(SDL_KEYDOWN, _keyboard_map_down, SDLK_f, 0x04);
+    register_key(SDL_KEYDOWN, _keyboard_map_down, SDLK_g, 0x08);
+    register_key(SDL_KEYDOWN, _keyboard_map_down, SDLK_j, 0x01);
+    register_key(SDL_KEYDOWN, _keyboard_map_down, SDLK_h, 0x02);
+
+    // Key up
+    register_key(SDL_KEYUP, _keyboard_map_up, SDLK_w, 0xEF);
+    register_key(SDL_KEYUP, _keyboard_map_up, SDLK_s, 0xDF);
+    register_key(SDL_KEYUP, _keyboard_map_up, SDLK_a, 0xBF);
+    register_key(SDL_KEYUP, _keyboard_map_up, SDLK_d, 0x7F);
+    register_key(SDL_KEYUP, _keyboard_map_up, SDLK_f, 0xFB);
+    register_key(SDL_KEYUP, _keyboard_map_up, SDLK_g, 0xF7);
+    register_key(SDL_KEYUP, _keyboard_map_up, SDLK_h, 0xFD);
+    register_key(SDL_KEYUP, _keyboard_map_up, SDLK_j, 0xFE);
 }
 
 QStringList InputHandler::joystickNames()

@@ -28,6 +28,25 @@ TinerasNES::~TinerasNES()
 
 void TinerasNES::init()
 {
+    resetAll();
+
+    _cpu = new CPU();
+    _mem = new MEM(this);
+    _ppu = new PPU(this);
+    _apu = new APU();
+    _nes_input = new NES_INPUT();
+
+    _cpu->init(_mem);
+    _mem->init(_ppu, _apu, _nes_input);
+    _ppu->init(_cpu, _mem);
+    _apu->init(_cpu);
+
+    // Enable Audio
+    _apu->setEnabled(true);
+}
+
+void TinerasNES::resetAll()
+{
     if (_cpu != nullptr)
         delete _cpu;
 
@@ -59,17 +78,6 @@ void TinerasNES::init()
     _draw_buffer = nullptr;
 
     _frame_timer.restart();
-
-    _cpu = new CPU();
-    _mem = new MEM(this);
-    _ppu = new PPU(this);
-    _apu = new APU();
-    _nes_input = new NES_INPUT();
-
-    _cpu->init(_mem);
-    _mem->init(_ppu, _apu, _nes_input);
-    _ppu->init(_cpu, _mem);
-    _apu->init(_cpu);
 }
 
 void TinerasNES::initSDL()
@@ -99,9 +107,6 @@ void TinerasNES::run()
     _draw_buffer = _ppu->frameBuffer;
 
     _frame_timer.start();
-
-    // Enable Audio
-    _apu->setEnabled(true);
 
     while(_running)
     {
