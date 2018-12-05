@@ -89,6 +89,7 @@
 
 #include "apu.h"
 #include "cpu.h"
+#include <QAudioDeviceInfo>
 
 //    **********
 //    APU Constructor
@@ -204,8 +205,8 @@ void APU::renderFrame()
 
     #pragma region Write Samples to Buffer(s)
     // Write Samples to Write Buffer
-    if(_apu_write_buffer_pos < sizeof(apu_write_buffer))
-        apu_write_buffer[_apu_write_buffer_pos++] = _output_sample;
+    if(_apu_write_buffer_pos < sizeof(_apu_write_buffer))
+        _apu_write_buffer[_apu_write_buffer_pos++] = _output_sample;
 
     // Wait for Write Buffer to fill to sizeof(apuPlayBuffer)
     if(_apu_write_buffer_pos % sizeof(_apu_play_buffer) == 0)
@@ -223,15 +224,15 @@ void APU::renderFrame()
         // Write sizeof(apuPlayBuffer) to Play Buffer
         for(int i = 0; i < sizeof(_apu_play_buffer); i++)
         {
-            _apu_play_buffer[i] = apu_write_buffer[_apu_play_buffer_pos++];
+            _apu_play_buffer[i] = _apu_write_buffer[_apu_play_buffer_pos++];
         }
 
         // Reset Play Buffer Position
-        if(_apu_play_buffer_pos >= sizeof(apu_write_buffer))
+        if(_apu_play_buffer_pos >= sizeof(_apu_write_buffer))
             _apu_play_buffer_pos = 0;
 
         // Reset Write Buffer Position
-        if(_apu_play_buffer_pos == (sizeof(apu_write_buffer) - sizeof(_apu_play_buffer)))
+        if(_apu_play_buffer_pos == (sizeof(_apu_write_buffer) - sizeof(_apu_play_buffer)))
             _apu_write_buffer_pos = 0;
 
         // Indicate that Play Buffer is Full
@@ -300,7 +301,7 @@ void APU::init_audio()
     _apu_cycles_total = 0;
 
     memset(_apu_play_buffer, 0, sizeof(_apu_play_buffer));
-    memset(apu_write_buffer, 0, sizeof(apu_write_buffer));
+    memset(_apu_write_buffer, 0, sizeof(_apu_write_buffer));
 
     _apu_play_buffer_pos = 0;
     _apu_write_buffer_pos = 0;
@@ -336,18 +337,49 @@ void APU::init_audio()
     SDL_CloseAudio();
 
     // Device Setup
-    _audio_spec_desired.freq     = 44100;           // Sampling Rate;    
+    _audio_spec_desired.freq     = 44100;           // Sampling Rate;
     _audio_spec_desired.format   = AUDIO_S8;        // Format
     _audio_spec_desired.channels = 1;               // Number of Channels
     _audio_spec_desired.samples  = _apu_buffer_len; // Number of Samples in Buffer
     _audio_spec_desired.callback = APU_callback;    // Callback
     _audio_spec_desired.userdata = this;
 
-    if (SDL_OpenAudio(&_audio_spec_desired, &_audio_spec_obtained) < 0)
+    QAudioDeviceInfo ad_info(QAudioDeviceInfo::defaultOutputDevice());
+    std::string default_audio_device_name = ad_info.deviceName().toStdString();
+    printf("Default audio device name: %s\n", default_audio_device_name.c_str());
+
+    printf("Enumerating audio devices...\n");
+    int default_id = NULL;
+    for (int i = 0; i < SDL_GetNumAudioDevices(0); i++)
+    {
+        printf("Id (%d) Audio device name: %s\n", i, SDL_GetAudioDeviceName(i, 0));
+
+        if (default_audio_device_name.compare(SDL_GetAudioDeviceName(i, 0)) == 0)
+        {
+            default_id = i;
+            break;
+        }
+    }
+
+    // Passing 'NULL' for the device name will get the default device (https://wiki.libsdl.org/SDL_OpenAudioDevice)
+    int playback_device_id = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(default_id, 0), 0, &_audio_spec_desired, &_audio_spec_obtained, 0);
+
+    if (_audio_spec_desired.format != _audio_spec_obtained.format)
+    {
+        printf("Obtained audio format does not match the desired audio format\n");
+    }
+
+    if (playback_device_id < 0)
     {
         printf("Failed to initialize SDL Audio. Error: %s\n", SDL_GetError());
 
-        throw;
+        //throw; // TODO: Do something with this
+    }
+    else
+    {
+        printf("Successfully opened audio device: %s\n", SDL_GetAudioDeviceName(playback_device_id, 0));
+
+        SDL_PauseAudioDevice(playback_device_id, 0);
     }
 }
 

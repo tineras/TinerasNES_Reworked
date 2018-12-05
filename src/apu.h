@@ -92,7 +92,7 @@ private:
     unsigned int _apu_cycles_total;
 
     unsigned char _apu_play_buffer[1024];
-    unsigned char apu_write_buffer[65536];
+    unsigned char _apu_write_buffer[65536];
     unsigned int _apu_play_buffer_pos;
     unsigned int _apu_write_buffer_pos;
     unsigned int _apu_write_buffer_pos_last;

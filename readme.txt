@@ -8,7 +8,7 @@ Project:     TinerasNES NES Emulator (C++)
 
 Created:     September 3, 2014, 8:40 PM
 
-Modified:    September 17, 2014, 10:01 PM
+Modified:    December 4, 2018, 11:30 PM
 
 Version:     1
 
@@ -25,28 +25,47 @@ Accurate emulation of the 2A03 (6502-based CPU core) including implementation of
 registers, complete instruction set and addressing modes. Per-pixel rendering is
  implemented for the PPU to realistically render background and sprite assets 
 within the NTSC frame time. Audio emulation of Rectangle, Triangle and Noise 
-channels. Simple Directmedia Layer (SDL) was used for rendering and audio.
+channels. Simple Directmedia Layer (SDL) was used for input and audio.
 
 
-Libraries Used:
-- Qt 5.3.1 for Windows 32-bit (VS 2010, OpenGL, 537 MB)
-[Ui, Drawing via QGLWidget]
-(http://download.qt-project.org/official_releases/qt/5.3/5.3.1/qt-opensource-windows-x86-msvc2010_opengl-5.3.1.exe)
-- SDL2 2.0.3
-[Joystick Input, Audio]
-(https://www.libsdl.org/release/SDL2-devel-2.0.3-VC.zip)
+Libraries Used
+--------------
+
+- Qt 5.7.0 64-bit for Windows [Ui, Drawing via QGLWidget]
+    - http://download.qt.io/official_releases/qt/5.7/5.7.0/qt-opensource-windows-x86-msvc2015_64-5.7.0.exe
+
+- SDL2 2.0.9 [Joystick Input, Audio]
+	- https://www.libsdl.org/release/SDL2-2.0.9-win32-x64.zip
 
 Project IDE and Misc:
-- Visual Studio 2010 Premium
-- Visual Studio Add-in 1.2.3 for Qt5
-(http://download.qt-project.org/official_releases/vsaddin/qt-vs-addin-1.2.3-opensource.exe)
+- Visual Studio 2017
+- Qt5 Visual Studio 2017 Add-in 2.2.2
+	- https://download.qt.io/archive/vsaddin/qt-vsaddin-msvc2017-2.2.2.vsix
 
-Misc. Setup Notes:
-- Qt path from within Visual Studio [MenuBar]->Qt5->Qt Options
-Name: Qt5.3.1
-Path: C:\Qt\5.3.1\5.3\msvc2010_opengl
-- Had to manually build SDL2 2.0.3 because of Code Generation > Runtime Library conflicts
-between SDL and Qt. Built using Multi-threaded Debug DLL (/MDd). Place the Debug and
-Release SDL2.dll in their respective folders next to TinerasNES.exe.
+
+Installation and Setup
+----------------------
+
+Installation Instructions (Assumes Visual Studio is installed):
+1. Install Qt 5.7.0 package above (default dir is fine: c:\qt\5.7.0)
+2. Install Qt Visual Studio Addin from above
+3. Configure Qt Visual Studio settings in the Visual Studio Toolbar
+    a. Select a name (anything is fine... like "Qt5.7.0")
+    b. Select the proper directory (C:\Qt\Qt5.7.0\5.7\msvc2015_64\)
+    c. Set it as the default at the bottom of the dialog
+4. Configure Qt MemVault project settings from Solution Explorer
+    a. Right click on project in Solution Explorer and select Qt Project Settings
+    b. In the Properties tab, select the Version created in the step above (ex. Qt5.7.0)
+    c. In the Qt Modules tab, select modules needed by the project
+        - Currently: Core, GUI, Print Support, Widgets
+        - To find which module is needed, lookup the include string (ex. QClipboard)
+          The official Qt page when searching for 'QClipboard' should indicate that it
+          is part of the QtGui module. Therefore, you must include the 'Gui' module.
+
+
+Misc
+----
+
+- Place SDL2.dll alongside the TinerasNES executable (in x64/[Debug/Release]).
 
 ################################################################################

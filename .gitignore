@@ -8,12 +8,15 @@
 *.sdf
 *.suo
 *.opensdf
+*.db
+*.opendb
 
 ipch
 dependencies
-Win32
+x64
 
 TinerasNES/Debug
 TinerasNES/Release
 TinerasNES/GeneratedFiles
 TinerasNES/Resources
+TinerasNES/x64
