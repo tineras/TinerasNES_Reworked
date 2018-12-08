@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
     _show_menu(true)
 {
     _ui.setupUi(this);
+    this->setAttribute(Qt::WA_DeleteOnClose);
 
     _ui.gridLayout->setContentsMargins(0, 0, 0, 0);
     _ui.status_bar->setEnabled(false);
@@ -50,12 +51,27 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    delete _emu_thread;
-    delete _tineras_nes;
-    delete _GLWidget;
-    delete _input_handler;
-    delete _input_dialog;
-    delete _ram_viewer;
+    if (_emu_thread != nullptr)
+    {
+        _emu_thread->terminate();
+
+        delete _emu_thread;
+    }
+
+    if (_tineras_nes != nullptr)
+        delete _tineras_nes;
+
+    if (_GLWidget != nullptr)
+        delete _GLWidget;
+
+    if (_input_handler != nullptr)
+        delete _input_handler;
+
+    if (_input_dialog != nullptr)
+        delete _input_dialog;
+
+    if (_ram_viewer != nullptr)
+        delete _ram_viewer;
 }
 
 unsigned char* MainWindow::pixels()

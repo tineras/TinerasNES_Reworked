@@ -46,9 +46,14 @@ InputDialog::InputDialog(InputHandler* input_handler) :
 
 InputDialog::~InputDialog()
 {
-    delete _controller_widget_1;
-    delete _controller_widget_2;
-    delete _input_handler;
+    if (_controller_widget_1 != nullptr)
+        delete _controller_widget_1;
+
+    if (_controller_widget_2 != nullptr)
+        delete _controller_widget_2;
+
+    // Why am I having to do this? Otherwise the program is hanging
+    this->close();
 }
 
 void InputDialog::captureButton(QPushButton* button, ButtonType button_type, QString label_text)

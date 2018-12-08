@@ -110,6 +110,9 @@ void TinerasNES::run()
 
     while(_running)
     {
+        if (_quit)
+            return;
+
         if (_drawing_frame)
             continue;
 
@@ -133,7 +136,9 @@ void TinerasNES::run()
         // Ready to render
         if(_ppu->readyToRender())
         {
-            while (_frame_timer.elapsed() < k_frame_time) {}
+            // NOTE: This is supremely wasteful
+            while (_frame_timer.elapsed() < k_frame_time) { if (_quit) { return; } /* CPU KILLER WAITING HERE */ }
+
             _frame_timer.restart();
 
             {
