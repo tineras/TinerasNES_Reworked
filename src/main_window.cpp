@@ -130,11 +130,15 @@ void MainWindow::test2()
 
 void MainWindow::keyPressEvent(QKeyEvent* event)
 {
+    if (event->isAutoRepeat())
+    {
+        event->ignore();
+
+        return;
+    }
+
     // Call base class key press event
     QWidget::keyPressEvent(event);
-
-    if (event->isAutoRepeat())
-        return;
 
     switch(event->key())
     {
@@ -167,6 +171,13 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 
 void MainWindow::keyReleaseEvent(QKeyEvent* event)
 {
+    if (event->isAutoRepeat())
+    {
+        event->ignore();
+
+        return;
+    }
+
     // Call base class key press event
     QWidget::keyReleaseEvent(event);
 

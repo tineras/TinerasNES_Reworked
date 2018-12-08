@@ -182,7 +182,7 @@ void TinerasNES::openFile(QString filename)
     // Courtesy of NEStreme Emu
     // Name: LoadROMToMem()
     // Desc: Loads the ROM into memory for use. The .NES file is 
-    //       structure as follow (copied from Yoshi's nes doc.
+    //       structure as follow (copied from Yoshi's nes doc.)
     //
     //    +--------+------+------------------------------------------+
     //    | Offset | Size | Content(s)                               |

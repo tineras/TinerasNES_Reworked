@@ -125,7 +125,6 @@ void InputDialog::onSetAllButtons()
 
 void InputDialog::keyPressEvent(QKeyEvent* event)
 {
-
     // Call base class key press event
     QWidget::keyPressEvent(event);
 
