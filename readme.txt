@@ -35,7 +35,8 @@ Libraries Used
     - http://download.qt.io/official_releases/qt/5.7/5.7.0/qt-opensource-windows-x86-msvc2015_64-5.7.0.exe
 
 - SDL2 2.0.9 [Joystick Input, Audio]
-	- https://www.libsdl.org/release/SDL2-2.0.9-win32-x64.zip
+	- https://www.libsdl.org/release/SDL2-2.0.9-win32-x64.zip (DLL)
+    - https://www.libsdl.org/release/SDL2-devel-2.0.9-VC.zip (Includes/Libs)
 
 Project IDE and Misc:
 - Visual Studio 2017

@@ -7,6 +7,7 @@ class TinerasNES;
 class PPU;
 class APU;
 class NES_INPUT;
+class IMapper;
 
 class MEM
 {
@@ -58,10 +59,6 @@ public:
     int _t;
     unsigned char _fineX;
 
-    // Mappers
-    unsigned char* _mapperPRGPtr[0x08][0x10]; // [0-8] * 0x1000, [0-F] * 0x0100
-    unsigned char* _mapperCHRPtr[0x02][0x10]; // [0-8] * 0x1000, [0-F] * 0x0100
-
 private:
     unsigned char getPPUByte(int address);
     void setPPUByte(int address, unsigned char data);
@@ -94,9 +91,15 @@ private:
     std::vector<unsigned char> _memPRG;    // Cart PRoGram Memory
     std::vector<unsigned char> _memCHR;    // Cart CHaRacter Memory
 
+    // Mappers
+    unsigned char* _mapperPRGPtr[0x08][0x10]; // [0-8] * 0x1000, [0-F] * 0x0100
+    unsigned char* _mapperCHRPtr[0x02][0x10]; // [0-8] * 0x1000, [0-F] * 0x0100
+
     TinerasNES *_tn;
     PPU* _ppu;
     APU* _apu;
     NES_INPUT* _nes_input;
+
+    std::shared_ptr<IMapper> _mapper;
 };
 #endif //_MEM_HEADER

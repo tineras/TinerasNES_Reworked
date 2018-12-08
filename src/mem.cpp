@@ -23,18 +23,18 @@
     Mirror                  (4000-FFFF)[49152] // Mirrors ($0000-$3FFF) <- Logical, not physical
 - [16K] Internal NES VRAM -
     Mirror                  (3F20-3FFF) [ 224] // Mirrors ($3F00-$3F1F)
-    Sprite Palette          (3F10-3F1F) [  16] // Points (does not contain) to index of colors that can be used by sprites (only 64 possiblities, bits 6 and 7 can be ignored)
-    Image Palette           (3F00-3F0F) [  16] // Points (does not contain) to index of colors that can be used by background (only 64 possiblities, bits 6 and 7 can be ignored)
+    Sprite Palette          (3F10-3F1F) [  16] // Points (does not contain) to index of colors that can be used by sprites (only 64 possibilities, bits 6 and 7 can be ignored)
+    Image Palette           (3F00-3F0F) [  16] // Points (does not contain) to index of colors that can be used by background (only 64 possibilities, bits 6 and 7 can be ignored)
     Mirror                  (3000-3EFF) [3839] // Mirrors ($2000-$2EFF)
-    Attribute Table 3       (2FC0-2FFF) [  64] // 
+    Attribute Table 3       (2FC0-2FFF) [  64] //
     Name Table 3            (2C00-2FBF) [ 960] // (32 x 30 Tiles. Each tile is 8bits x 8bits.  32 Bytes * 30 Bytes = 960B or one whole 256x240 screen)
-    Attribute Table 2       (2BC0-2BFF) [  64] // 
+    Attribute Table 2       (2BC0-2BFF) [  64] //
     Name Table 2            (2800-2BBF) [ 960] // (32 x 30 Tiles. Each tile is 8bits x 8bits.  32 Bytes * 30 Bytes = 960B or one whole 256x240 screen)
-    Attribute Table 1       (27C0-27FF) [  64] // 
+    Attribute Table 1       (27C0-27FF) [  64] //
     Name Table 1            (2400-27BF) [ 960] // (32 x 30 Tiles. Each tile is 8bits x 8bits.  32 Bytes * 30 Bytes = 960B or one whole 256x240 screen)
     Attribute Table 0       (23C0-23FF) [  64] // (1 Byte per tile on the screen; Holds
     Name Table 0            (2000-23BF) [ 960] // (32 x 30 Tiles)
-- [8K] Memory Mapped Cartridge CHR-ROM (VRAM/VROM) 
+- [8K] Memory Mapped Cartridge CHR-ROM (VRAM/VROM)
     Pattern Table 1         (1000-1FFF) [4096] // (256 x 2 x 8, may be VROM)
     Pattern Table 2         (0000-0FFF) [4096] // (256 x 2 x 8, may be VROM)
 
@@ -50,6 +50,9 @@
 #include "ppu.h"
 #include "apu.h"
 #include "nes_input.h"
+#include "imapper.h"
+
+#include "mapper_0.h"
 
 //    **********
 //    MEM Constructor
@@ -89,7 +92,35 @@ void MEM::setHorizontalVerticalMirrorBit(char value)
 
 void MEM::setMapperNumber(char num)
 {
+#if 0
     _mapper_num = num;
+#else
+    switch (_mapper_num)
+    {
+    case 00:
+    {
+        _mapper_num = new Mapper_0();
+    }
+    break;
+
+    case 02:
+    case 66:
+    {
+    }
+    break;
+
+    case 03:
+    case 67:
+    case 64:
+    {
+    }
+    break;
+    default:
+    {
+    }
+    break;
+    }
+#endif
 }
 
 //    **********
@@ -1021,6 +1052,8 @@ unsigned char MEM::getMemoryMappedCPUByte(int address)
 //    Set Memory Mapped CPU Byte
 void MEM::setMemoryMappedCPUByte(int address, unsigned char data)
 {
+
+#if 0
     switch (_mapper_num)
     {
         case 00:
@@ -1070,6 +1103,7 @@ void MEM::setMemoryMappedCPUByte(int address, unsigned char data)
             }
             break;
     }
+#endif
 }
 
 //    **********

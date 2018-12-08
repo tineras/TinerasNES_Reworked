@@ -6,6 +6,7 @@
 #include <vector>
 #include <ctype.h>
 #include <math.h>
+#include <memory>
 
 #include <QElapsedTimer>
 #include <QFile>
