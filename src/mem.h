@@ -59,6 +59,13 @@ public:
     int _t;
     unsigned char _fineX;
 
+    std::vector<unsigned char>& memPRG() { return _memPRG; };    // Cart PRoGram Memory
+    std::vector<unsigned char>& memCHR() { return _memCHR; }    // Cart CHaRacter Memory
+
+    // Mappers
+    unsigned char** mapperPRGPtr() { return &_mapperPRGPtr[0][0]; }; // [0-8] * 0x1000, [0-F] * 0x0100
+    unsigned char** mapperCHRPtr() { return &_mapperCHRPtr[0][0]; } // [0-8] * 0x1000, [0-F] * 0x0100
+
 private:
     unsigned char getPPUByte(int address);
     void setPPUByte(int address, unsigned char data);

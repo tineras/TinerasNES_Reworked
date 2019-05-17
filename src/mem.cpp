@@ -99,7 +99,7 @@ void MEM::setMapperNumber(char num)
     {
     case 00:
     {
-        _mapper_num = new Mapper_0();
+        _mapper = std::make_shared<Mapper_0>(this);
     }
     break;
 

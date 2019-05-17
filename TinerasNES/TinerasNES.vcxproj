@@ -95,6 +95,7 @@
     <ClCompile Include="..\src\input_handler.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\main_window.cpp" />
+    <ClCompile Include="..\src\mapper_0.cpp" />
     <ClCompile Include="..\src\mem.cpp" />
     <ClCompile Include="..\src\nes_input.cpp" />
     <ClCompile Include="..\src\ppu.cpp" />
@@ -197,6 +198,8 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </Command>
     </CustomBuild>
+    <ClInclude Include="..\src\imapper.h" />
+    <ClInclude Include="..\src\mapper_0.h" />
     <ClInclude Include="GeneratedFiles\ui_controller_widget.h" />
     <ClInclude Include="GeneratedFiles\ui_input_dialog.h" />
     <ClInclude Include="GeneratedFiles\ui_ram_viewer.h" />
