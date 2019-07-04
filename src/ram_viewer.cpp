@@ -13,6 +13,8 @@ RamViewer::RamViewer(TinerasNES* tineras_nes)
 
 RamViewer::~RamViewer()
 {
+    // Why am I having to do this? Otherwise the program is hanging
+    this->close();
 }
 
 void RamViewer::updateText()
