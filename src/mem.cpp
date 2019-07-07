@@ -46,6 +46,7 @@
     */
 
 #include "mem.h"
+#include "common.h"
 #include "TinerasNES.h"
 #include "ppu.h"
 #include "apu.h"
@@ -92,9 +93,8 @@ void MEM::setHorizontalVerticalMirrorBit(char value)
 
 void MEM::setMapperNumber(char num)
 {
-#if 0
     _mapper_num = num;
-#else
+
     switch (_mapper_num)
     {
     case 00:
@@ -102,25 +102,27 @@ void MEM::setMapperNumber(char num)
         _mapper = std::make_shared<Mapper_0>(this);
     }
     break;
-
-    case 02:
+    case 02: // UNROM
     case 66:
     {
+        // TODO: Implement this properly
+        _mapper = std::make_shared<Mapper_0>(this);
     }
     break;
-
-    case 03:
+    case 03: // CNROM
     case 67:
     case 64:
     {
+        // TODO: Implement this properly
+        _mapper = std::make_shared<Mapper_0>(this);
     }
     break;
     default:
     {
+        QMessageBox::warning(nullptr, "Error", QString("No implementation for mapper: %1").arg((int)num));
     }
     break;
     }
-#endif
 }
 
 //    **********
@@ -1052,16 +1054,13 @@ unsigned char MEM::getMemoryMappedCPUByte(int address)
 //    Set Memory Mapped CPU Byte
 void MEM::setMemoryMappedCPUByte(int address, unsigned char data)
 {
-
-#if 0
+#if 1
     switch (_mapper_num)
     {
         case 00:
             {
                 // Do nothing, just write to address
-                // **THIS SHOULD NEVER HAPPEN**
                 _memPRG[address - 0x8000] = data;
-                //setMemoryMappedCPUByte(addr, data);
             }
             break;
 
