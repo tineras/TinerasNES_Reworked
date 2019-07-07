@@ -7,6 +7,12 @@
 #include "apu.h"
 #include "nes_input.h"
 
+// NES Emu Resolution
+static const int kResX = 256;
+static const int kResY = 240;
+
+static const int kMaxCpuCycle = 29780 * 15; // Max CPU cycles per frame (29780)
+
 TinerasNES::TinerasNES() :
     _cpu(nullptr),
     _mem(nullptr),
@@ -15,8 +21,7 @@ TinerasNES::TinerasNES() :
     _nes_input(nullptr),
     _running(false),
     _drawing_frame(false),
-    _quit(false),
-    _draw_buffer(nullptr)
+    _quit(false)
 {
     initSDL();
 }
@@ -43,6 +48,8 @@ void TinerasNES::init()
 
     // Enable Audio
     _apu->setEnabled(true);
+
+    _initialized = true;
 }
 
 void TinerasNES::resetAll()
@@ -75,7 +82,6 @@ void TinerasNES::resetAll()
     _master_cpu_cycle = 0;
     _current_cpu_cycle = 0;
     _apu_frame_count = 0;
-    _draw_buffer = nullptr;
 
     _frame_timer.restart();
 }
@@ -104,17 +110,12 @@ void TinerasNES::idle()
 
 void TinerasNES::run()
 {
-    _draw_buffer = _ppu->frameBuffer;
-
     _frame_timer.start();
 
     while(_running)
     {
         if (_quit)
             return;
-
-        if (_drawing_frame)
-            continue;
 
         // Run CPU - Execute Opcode
         int elapsed_cpu_cycles = _cpu->execOpCode();
@@ -136,34 +137,29 @@ void TinerasNES::run()
         // Ready to render
         if(_ppu->readyToRender())
         {
+            static const double framerate = 60;
+            static const double frame_time_ms = 1.0 / framerate * 1000;
+
             // NOTE: This is supremely wasteful
-            while (_frame_timer.elapsed() < k_frame_time) { if (_quit) { return; } /* CPU KILLER WAITING HERE */ }
+            while (_frame_timer.elapsed() < frame_time_ms) { if (_quit) { return; } /* CPU KILLER WAITING HERE */ }
 
             _frame_timer.restart();
 
-            {
-                // TODO: HACK...FIX THIS (SETTING BG Color)
-                // Should be respecting BG transparency instead
-                for (int i = 0; i < (256 * 240 * 4); i+=4)
-                {
-                    if (_ppu->frameBuffer[i + 3] == 0)
-                    {
-                        _ppu->frameBuffer[i]     = _ppu->BGColorR;
-                        _ppu->frameBuffer[i + 1] = _ppu->BGColorG;
-                        _ppu->frameBuffer[i + 2] = _ppu->BGColorB;
-                        _ppu->frameBuffer[i + 3] = 255;
-                    }
-                }
+            _drawing_frame = true;
 
-                _drawing_frame = true;
-                emit repaintGLWidget();
+            // Clear the screen and repaint the background before the next render loop begins
+            emit repaintGLWidget();
 
-                // Reset CPU Cycle
-                _current_cpu_cycle = 0;
-                _ppu->setReadyToRender(false);
-            }
+            // Reset CPU Cycle
+            _current_cpu_cycle = 0;
+            _ppu->setReadyToRender(false);
         }
     }
+}
+
+unsigned char* TinerasNES::pixels()
+{
+    return _ppu->finalDrawBuffer();
 }
 
 void TinerasNES::onKeyPressEvent(unsigned char button)

@@ -166,6 +166,9 @@
     <CustomBuild Include="..\src\input_handler.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\src\nametable_viewer.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\apu_rect2.h">
@@ -215,6 +218,8 @@
     </ClInclude>
     <ClInclude Include="..\src\mapper_0.h">
       <Filter>Header Files</Filter>
+    <ClInclude Include="GeneratedFiles\ui_nametable_viewer.h">
+      <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

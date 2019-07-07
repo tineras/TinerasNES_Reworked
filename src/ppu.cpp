@@ -23,9 +23,7 @@ unsigned char palColors[64][4] = {{0x75, 0x75, 0x75, 0x00}, {0x27, 0x1B, 0x8F, 0
                                   {0xFF, 0xFF, 0xFF, 0x00}, {0xAB, 0xE7, 0xFF, 0x00}, {0xC7, 0xD7, 0xFF, 0x00}, {0xD7, 0xCB, 0xFF, 0x00}, {0xFF, 0xC7, 0xFF, 0x00}, {0xFF, 0xC7, 0xDB, 0x00}, {0xFF, 0xBF, 0xB3, 0x00}, {0xFF, 0xDB, 0xAB, 0x00}, 
                                   {0xFF, 0xE7, 0xA3, 0x00}, {0xE3, 0xFF, 0xA3, 0x00}, {0xAB, 0xF3, 0xBF, 0x00}, {0xB3, 0xFF, 0xCF, 0x00}, {0x9F, 0xFF, 0xF3, 0x00}, {0x00, 0x00, 0x00, 0x00}, {0x00, 0x00, 0x00, 0x00}, {0x00, 0x00, 0x00, 0x00}};
 
-//    **********
-//    PPU Run
-#pragma region /* ----- Run PPU ----- */
+// PPU Run
 void PPU::run(int runto)
 {
     #pragma region /* Scanline 240 */
@@ -168,16 +166,15 @@ void PPU::run(int runto)
         tsPPU = 0;
         _ready_to_render = true;
 
+        memcpy(&finalBuffer[0], &frameBuffer[0], 256 * 240 * 4);
+
         // Reset Scanline to -2
         scanline = -2;
     }
     #pragma endregion
 }
-#pragma endregion
 
-//    **********
-//    Render Background
-#pragma region /* ----- Render Background ----- */
+// Render Background
 void PPU::renderBackground()
 {
     #pragma region Draw Single Background Pixel
@@ -188,7 +185,7 @@ void PPU::renderBackground()
         // Reset fine X
         fX = 0;
 
-        // If scroll X reaches its limis xxxxxxxxx11111, reset it 
+        // If scroll X reaches its limits xxxxxxxxx11111, reset it 
         if ((scrollXY_CurrentTileNum & 0x001F) == 0x001F)
         {
             // If end of X scroll, change to next nametable and continue drawing
@@ -230,7 +227,7 @@ void PPU::renderBackground()
         bgAlpha = true;
         if (BGColor == 0)
         {
-            BGAlpha = 0x00;        // Set current pixel Alpha to '0x00' (transparent)
+            BGAlpha = 0x00;     // Set current pixel Alpha to '0x00' (transparent)
             bgAlpha = false;    // To easily let sprites know if BG pixel is transparent '0x00' = false, '0xFF' = true
         }
         else if(BGColor != 0)
@@ -245,19 +242,26 @@ void PPU::renderBackground()
         int bgPixelNumberTemp = pixelXTemp % 8;
         int bgTileNumberTemp = (pixelXTemp / 8) + ((scanlineTemp / 8) * 32);
 
-        // Draw R,G,B,A of Current Background Pixel        
-        constructBackground(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][2], 2);
-        constructBackground(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][1], 1);
-        constructBackground(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][0], 0);
-        constructBackground(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, BGAlpha, 3);
+        if (BGAlpha == 0)
+        {
+            frameBuffer[(bgTileNumberTemp * 32 + bgTileLineNumberTemp * 1024 + (bgPixelNumberTemp) * 4) + (int)(bgTileNumberTemp / 32) * 32 * 224 + 2] = BGColorB;
+            frameBuffer[(bgTileNumberTemp * 32 + bgTileLineNumberTemp * 1024 + (bgPixelNumberTemp) * 4) + (int)(bgTileNumberTemp / 32) * 32 * 224 + 1] = BGColorG;
+            frameBuffer[(bgTileNumberTemp * 32 + bgTileLineNumberTemp * 1024 + (bgPixelNumberTemp) * 4) + (int)(bgTileNumberTemp / 32) * 32 * 224 + 0] = BGColorR;
+            frameBuffer[(bgTileNumberTemp * 32 + bgTileLineNumberTemp * 1024 + (bgPixelNumberTemp) * 4) + (int)(bgTileNumberTemp / 32) * 32 * 224] = BGAlpha;
+        }
+        else
+        {
+            // Draw R,G,B,A of Current Background Pixel
+            constructBackground(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][2], 2);
+            constructBackground(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][1], 1);
+            constructBackground(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, palColors[finalPixelColor][0], 0);
+            constructBackground(bgTileNumberTemp, bgTileLineNumberTemp, bgPixelNumberTemp, BGAlpha, 3);
+        }
     }
     #pragma endregion
 }
-#pragma endregion
 
-//    **********
-//    Render Sprites
-#pragma region /* ----- Render Sprites ----- */
+// Render Sprites
 void PPU::renderSprites()
 {
     #pragma region Draw Sprites to Frame Buffer
@@ -319,11 +323,8 @@ void PPU::renderSprites()
     }
     #pragma endregion
 }
-#pragma endregion
 
-//    **********
-//    Sprites - Check *Next* Scanline For Sprites
-#pragma region /* ----- Sprites - Check *Next* Scanline For Sprites ----- */
+// Sprites - Check *Next* Scanline For Sprites
 void PPU::checkScanlineForSprites()
 {
     // Update all previously retreived sprite values as the new current values
@@ -383,11 +384,8 @@ void PPU::checkScanlineForSprites()
         spriteIndex = 0;
     }
 }
-#pragma endregion
 
-//    **********
-//    Sprites - Get Index of Current Sprite to Draw
-#pragma region /* ----- Sprites - Get Index of Current Sprite to Draw ----- */
+// Sprites - Get Index of Current Sprite to Draw
 bool PPU::getSpriteToDraw()
 {
     for (int i = 0; i <= numSprites; i++ )
@@ -411,11 +409,8 @@ bool PPU::getSpriteToDraw()
     // If sprite is not within current pixelX position && it is Transparent, do nothing
     return false;
 }
-#pragma endregion
 
-//    **********
-//    Sprites - Check Sprite Transparency
-#pragma region /* ----- Sprites - Check Sprite Transparency ----- */
+// Sprites - Check Sprite Transparency
 bool PPU::checkTransparency(int i)
 {
     // NO NEED TO CHECK FOR spLineNumber, pal, Pattern Table, flipping on every pixel .... only every line except for flipping which is every tile (and mybe others too)
@@ -509,11 +504,8 @@ bool PPU::checkTransparency(int i)
         return true;
     }
 }
-#pragma endregion
 
-//    **********
-//    Update Draw Location ('t' operations)
-#pragma region /* ----- Update Draw Location ('t' operations) ----- */
+// Update Draw Location ('t' operations)
 void PPU::updateDrawLocation()
 {
     // Update 'v' at Beginning of frame
@@ -623,20 +615,14 @@ void PPU::updateDrawLocation()
     //    }
     }
 }
-#pragma endregion
 
-//    **********
-//    Draw Background
-#pragma region /* ----- Draw Background ----- */
+// Draw Background
 void PPU::constructBackground(int tile, int line, int pixel, unsigned char color, unsigned char rgbOffset)
 {
     frameBuffer[(tile * 32 + line * 1024 + (pixel) * 4) + (int)(tile / 32) * 32 * 224 + rgbOffset] = color;
 }
-#pragma endregion
 
-//    **********
-//    Draw Sprites
-#pragma region /* ----- Draw Sprites ----- */
+// Draw Sprites
 void PPU::constructSprites(int x, int y, unsigned char color, unsigned char rgbOffset)
 {
     if (y < 240)
@@ -644,11 +630,8 @@ void PPU::constructSprites(int x, int y, unsigned char color, unsigned char rgbO
         frameBuffer[x * 4 + y * 1024 + rgbOffset] = color;
     }
 }
-#pragma endregion
 
-//    **********
-//    Get Palette Number
-#pragma region /* ----- Get Palette Number ----- */
+// Get Palette Number
 int PPU::getPal()
 {
     #pragma region // Get Palette for each tile
@@ -681,11 +664,8 @@ int PPU::getPal()
     return 0x3F00 + ((attr >> (palOffset[bmrow][bmcol])) & 0x03) * 4;
     #pragma endregion
 }
-#pragma endregion
 
-//    **********
-//    Get Palette Color
-#pragma region /* ----- Get Palette Color ----- */
+// Get Palette Color
 unsigned char PPU::getColor(unsigned char ntOffset)
 {
     #pragma region // Get color for each pixel
@@ -709,11 +689,50 @@ unsigned char PPU::getColor(unsigned char ntOffset)
     return (unsigned char)(((PTable1 >> (7 - BGPixel)) & 0x01) | (((PTable2 >> (7 - BGPixel)) & 0x01) * 2)); // Get color
     #pragma endregion
 }
-#pragma endregion
 
-//    **********
-//    PPU Init Variables
-#pragma region /* ----- PPU Init Variables ----- */
+std::map<int, unsigned char*>& PPU::NametableBuffers()
+{
+    // Update all the buffers
+    for (auto& nt_buffer : _nametable_buffers)
+    {
+        int nametable_address = nt_buffer.first;
+        unsigned char* nametable_buffer = nt_buffer.second;
+
+        // Get data for drawing tiles without the scroll offsets
+        int cntScanlineTemp = pixelM / 256;
+        int bgTileLineNumberTemp = cntScanlineTemp % 8;
+        int pixelXTemp = pixelM % 256;
+        int bgPixelNumberTemp = pixelXTemp % 8;
+        int bgTileNumberTemp = (pixelXTemp / 8) + ((cntScanlineTemp / 8) * 32);
+
+        int pal = getPal();
+
+        unsigned char alpha = 0xFF;
+
+        if (getColor(nametable_address) == 0)
+        {
+            alpha = 0x00;
+        }
+
+        // Get Nametable Byte
+        unsigned char nametableOffset = _mem->getPPU(nametable + BGTile);
+
+        // Get the Palette Color to use for the current pixel
+        unsigned char BGColor = getColor(nametableOffset);
+
+        // Combine pal and color offset to get final color of current pixel (only 64 (0x3F) possible colors)
+        unsigned char finalPixelColor = _mem->getPPU(pal + BGColor) & 0x3F;
+
+        nametable_buffer[(bgTileNumberTemp * 32 + bgTileLineNumberTemp * 1024 + (bgPixelNumberTemp) * 4) + (int)(bgTileNumberTemp / 32) * 32 * 224 + 2] = unsigned char(palColors[finalPixelColor, 2]);
+        nametable_buffer[(bgTileNumberTemp * 32 + bgTileLineNumberTemp * 1024 + (bgPixelNumberTemp) * 4) + (int)(bgTileNumberTemp / 32) * 32 * 224 + 1] = unsigned char(palColors[finalPixelColor, 1]);
+        nametable_buffer[(bgTileNumberTemp * 32 + bgTileLineNumberTemp * 1024 + (bgPixelNumberTemp) * 4) + (int)(bgTileNumberTemp / 32) * 32 * 224 + 0] = unsigned char(palColors[finalPixelColor, 0]);
+        nametable_buffer[(bgTileNumberTemp * 32 + bgTileLineNumberTemp * 1024 + (bgPixelNumberTemp) * 4) + (int)(bgTileNumberTemp / 32) * 32 * 224] = alpha;
+    }
+
+    return _nametable_buffers;
+}
+
+// PPU Init Variables
 void PPU::init(CPU* cpu, MEM* mem)
 {
     _cpu = cpu;
@@ -721,11 +740,8 @@ void PPU::init(CPU* cpu, MEM* mem)
 
     reset();
 }
-#pragma endregion
 
-//    **********
-//    Reset PPU Variables
-#pragma region /* ----- Reset PPU Variables ----- */
+// Reset PPU Variables
 void PPU::reset()
 {
     // PPU TimeStamp
@@ -736,8 +752,9 @@ void PPU::reset()
 
     // Clear Framebuffer
     memset(frameBuffer, 0, sizeof(frameBuffer));
+    memset(finalBuffer, 0, sizeof(finalBuffer));
 
-    // Set bolDrawBG and bolDrawSP to 'True' so that the BG and Srites are being drawn be default
+    // Set bolDrawBG and bolDrawSP to 'True' so that the BG and Sprites are being drawn be default
     _draw_background = true;
     _draw_sprites = true;
 
@@ -792,23 +809,27 @@ void PPU::reset()
     pixelM = 0;
 
     nametable = 0x2000;
-}
-#pragma endregion
 
-//    **********
-//    PPU Constuctor
-#pragma region /* ----- PPU Constructor ----- */
+    for (int i = 0; i < 4; i++)
+    {
+        int offset = 0x2000 + (i * 0x400);
+
+        if (_nametable_buffers.find(offset) != _nametable_buffers.end())
+        {
+            if (_nametable_buffers.at(offset) != nullptr)
+                delete _nametable_buffers.at(offset);
+        }
+
+        _nametable_buffers[offset] = new unsigned char[256 * 240 * 4];
+    }
+}
+
 PPU::PPU(TinerasNES* tn) : _ready_to_render(false)
 {
     _tn = tn;
 }
-#pragma endregion
 
-//    **********
-//    PPU Destructor
-#pragma region /* ----- PPU Destructor ----- */
 PPU::~PPU()
 {
 
 }
-#pragma endregion

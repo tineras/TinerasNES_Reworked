@@ -5,6 +5,7 @@
 
 #include <QtWidgets/QMainWindow>
 #include "ui_main_window.h"
+#include "ui_nametable_viewer.h"
 #include "tinerasnes.h"
 #include "glwidget.h"
 #include "ram_viewer.h"
@@ -20,6 +21,7 @@ public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    bool initialized();
     unsigned char* pixels();
 
 protected:
@@ -31,7 +33,7 @@ protected:
 signals:
     void onKeyPressEvent(QKeyEvent* event);
     void onKeyReleaseEvent(QKeyEvent* event);
-    void idle();
+    void onIdle();
 
 private slots:
     void openFile();
@@ -52,6 +54,7 @@ private:
     TinerasNES* _tineras_nes;
     GLWidget* _GLWidget;
     Ui::MainWindow _ui;
+    Ui::NametableViewer _ui_ntv;
     InputHandler* _input_handler;
     InputDialog* _input_dialog;
     RamViewer* _ram_viewer;

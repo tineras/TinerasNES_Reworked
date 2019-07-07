@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     _emu_thread = new QThread;
     _tineras_nes = new TinerasNES();
 
-    connect(this, SIGNAL(idle()), _tineras_nes, SLOT(idle()));
+    connect(this, SIGNAL(onIdle()), _tineras_nes, SLOT(idle()));
     connect(_tineras_nes, SIGNAL(handleSDLEvents()), this, SLOT(handleSDLEvents()));
     connect(_tineras_nes, SIGNAL(repaintGLWidget()), this, SLOT(repaintGLWidget()));
 
@@ -47,6 +47,13 @@ MainWindow::MainWindow(QWidget *parent)
     _input_timer.start();
 
     this->show();
+
+#if 0 // DEBUG
+    auto temp_glwidget = new GLWidget(this);
+    _ui_ntv.setupUi(this);
+    _ui_ntv.gridLayout->addWidget(temp_glwidget, 0, 0, 1, 1);
+    temp_glwidget->show();
+#endif
 }
 
 MainWindow::~MainWindow()
@@ -72,6 +79,11 @@ MainWindow::~MainWindow()
 
     if (_ram_viewer != nullptr)
         delete _ram_viewer;
+}
+
+bool MainWindow::initialized()
+{
+    return _tineras_nes != nullptr && _tineras_nes->initialized() ? true : false;
 }
 
 unsigned char* MainWindow::pixels()
@@ -101,9 +113,7 @@ void MainWindow::readFile(QString filename)
 
         _tineras_nes->openFile(filename);
 
-        emit idle();
-
-        connect(_tineras_nes, SIGNAL(repaintGLWidget()), this, SLOT(repaintGLWidget()));
+        emit onIdle();
 
         _ui.menu_bar->hide();
         _show_menu = false;
@@ -129,7 +139,7 @@ void MainWindow::showInputDialog()
 void MainWindow::test1()
 {
 #if 1
-    readFile("E:/Emulators/TestRoms/balloonfight.nes");
+    readFile("D:/Emulators/TestRoms/balloonfight.nes");
 #else
     readFile("C:/Emu/TestRoms/balloonfight.nes");
 #endif
@@ -138,7 +148,7 @@ void MainWindow::test1()
 void MainWindow::test2()
 {
 #if 1
-    readFile("E:/Emulators/TestRoms/Scrolling Games/Super Mario Bros (PC10) - NTSC.nes");
+    readFile("D:/Emulators/TestRoms/Scrolling Games/Super Mario Bros (PC10) - NTSC.nes");
 #else
     readFile("C:/Emu/TestRoms/Scrolling Games/Super Mario Bros (PC10) - NTSC.nes");
 #endif

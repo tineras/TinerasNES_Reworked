@@ -32,9 +32,12 @@ void GLWidget::initializeGL()
 
 void GLWidget::paintGL()
 {
+    if (!_main_window->initialized())
+        return;
+
     unsigned char* buffer = _main_window->pixels();
 
-    if (!buffer)
+    if (buffer == nullptr)
         return;
 
     // This just puts the image into memory, it does not control how it's drawn to the screen

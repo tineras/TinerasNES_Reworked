@@ -33,6 +33,9 @@ public:
     // Update 'V' drawing locations
     void updateDrawLocation();
 
+    // Final draw buffer
+    unsigned char* finalDrawBuffer() { return &finalBuffer[0]; }
+
     // Reset PPU Variables
     void reset();
 
@@ -47,8 +50,7 @@ public:
     unsigned char prevBGColorB; // B
     unsigned char prevBGColorA; // A
 
-    // Main draw buffer
-    unsigned char frameBuffer[256 * 240 * 4];    // Final rendered frame to draw. Contains BG and Sprites.
+    std::map<int, unsigned char*> _nametable_buffers;
 
     bool drawBackground() { return _draw_background; }
     bool drawSprites() { return _draw_sprites; }
@@ -57,6 +59,8 @@ public:
 
     void setClipBackground(bool clip_background) { _clip_background = clip_background; }
     void setClipSprites(bool clip_sprites) { _clip_sprites = clip_sprites; }
+
+    std::map<int, unsigned char*>& NametableBuffers();
 
 private:
     // Render Background/Sprites
@@ -74,6 +78,10 @@ private:
 
     // Draw each pixel
     void drawPixel();
+
+    // Main draw buffers
+    unsigned char frameBuffer[256 * 240 * 4];    // Frame being update pixel by pixel. To be copied to finalBuffer upon completion. Contains BG and Sprites.
+    unsigned char finalBuffer[256 * 240 * 4];    // Final rendered frame to draw. Contains BG and Sprites.
 
     // Run to 'VBlankTime' 
     int VBlankTime; // 20 Scanlines, 340 Pixels Per Scanline, 5 PPU Timestamp Cycles
